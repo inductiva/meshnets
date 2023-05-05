@@ -1,3 +1,4 @@
+"""Upload an object and visualize it using pyvista."""
 from absl import app, flags, logging
 import pyvista as pv
 
@@ -5,6 +6,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string("input_object", "data/blackbird.obj",
                     "File path of the object to be visualized")
+
 
 def main(_):
 
@@ -19,6 +21,6 @@ def main(_):
     # Plot the object
     mesh.plot(show_edges=True)
 
+
 if __name__ == "__main__":
     app.run(main)
-
