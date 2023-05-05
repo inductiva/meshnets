@@ -4,7 +4,7 @@ import pyvista as pv
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("input_object", "data/blackbird.obj",
+flags.DEFINE_string("input_object", "data/birdy.obj",
                     "File path of the object to be visualized")
 
 
