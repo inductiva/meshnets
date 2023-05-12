@@ -16,8 +16,8 @@ def load_mesh_from_obj(obj_path: str,
     cells = mesh.cells_dict['triangle']
 
     if verbose:
-        logging.info(f'Shape of nodes : {nodes.shape}')
-        logging.info(f'Shape of cells : {nodes.shape}')
+        logging.info('Nodes shape : %s', nodes.shape)
+        logging.info('Cells shape : %s', nodes.shape)
 
     return nodes, cells
 

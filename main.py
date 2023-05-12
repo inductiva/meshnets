@@ -12,7 +12,7 @@ flags.DEFINE_string('input_object', 'data/motorBike.obj',
 
 def main(_):
 
-    logging.info(f'Loading the mesh from {FLAGS.input_object}')
+    logging.info('Loading the object from %s', FLAGS.input_object)
     nodes, cells = data_loading.load_mesh_from_obj(FLAGS.input_object,
                                                    verbose=True)
 
@@ -25,9 +25,9 @@ def main(_):
 
     null_pressure = np.zeros(shape=(len(nodes), 1))
 
-    logging.info(f'Node features shape : {graph.node_features.shape}')
-    logging.info(f'Edge features shape : {graph.edge_set.features.shape}')
-    logging.info(f'Pressure label shape : {null_pressure.shape}')
+    logging.info('Node features shape : %s', graph.node_features.shape)
+    logging.info('Pressure label shape : %s', null_pressure.shape)
+    logging.info('Edge features shape : %s', graph.edge_set.features.shape)
 
 
 if __name__ == '__main__':
