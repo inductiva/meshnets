@@ -7,6 +7,7 @@ from typing import Tuple
 
 # TODO(victor): modify the loader once a data format has been decided
 
+
 def load_mesh_from_obj(obj_path: str,
                        verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -20,6 +21,7 @@ def load_mesh_from_obj(obj_path: str,
         logging.info('Cells shape : %s', nodes.shape)
 
     return nodes, cells
+
 
 # TODO(victor): Load pressure label
 # TODO(victor): Load windspeed tuple

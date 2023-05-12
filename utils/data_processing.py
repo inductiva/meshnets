@@ -5,20 +5,20 @@ from datatypes.graph import Graph
 
 import numpy as np
 
+
 def _triangles_to_edges(faces):
 
-    edges = np.concatenate([faces[:, 0:2],
-                            faces[:, 1:3],
-                            faces[:, [0,2]]],
-                            axis=0)
+    edges = np.concatenate([faces[:, 0:2], faces[:, 1:3], faces[:, [0, 2]]],
+                           axis=0)
 
     edges = np.sort(edges, axis=1)
     unique_edges = np.unique(edges, axis=0)
 
     senders, receivers = unique_edges[:, 0], unique_edges[:, 1]
 
-    return (np.concatenate([senders, receivers]),
-            np.concatenate([receivers, senders]))
+    return (np.concatenate([senders,
+                            receivers]), np.concatenate([receivers, senders]))
+
 
 def _compute_mesh_features(nodes, senders, receivers):
 
@@ -31,9 +31,9 @@ def _compute_mesh_features(nodes, senders, receivers):
 
     return mesh_features
 
-def mesh_to_graph(nodes: np.ndarray,
-                  node_features: np.ndarray,
-                  cells: np.ndarray) -> Graph :
+
+def mesh_to_graph(nodes: np.ndarray, node_features: np.ndarray,
+                  cells: np.ndarray) -> Graph:
 
     senders, receivers = _triangles_to_edges(cells)
     mesh_features = _compute_mesh_features(nodes, senders, receivers)

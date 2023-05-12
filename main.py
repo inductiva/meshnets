@@ -10,13 +10,14 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('input_object', 'data/motorBike.obj',
                     'File path of the object to be visualized')
 
+
 def main(_):
 
     logging.info('Loading the object from %s', FLAGS.input_object)
     nodes, cells = data_loading.load_mesh_from_obj(FLAGS.input_object,
                                                    verbose=True)
 
-    wind_vector = (10, 0, 0) # dummy wind vector along the X-axis
+    wind_vector = (10, 0, 0)  # dummy wind vector along the X-axis
     # node features for each node are the wind vector
     node_features = np.tile(wind_vector, (len(nodes), 1))
 
