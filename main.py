@@ -26,7 +26,7 @@ def main(_):
     null_pressure = np.zeros(shape=(len(nodes), 1))
 
     logging.info(f'Node features shape : {graph.node_features.shape}')
-    logging.info(f'Edge features shape : {graph.edge_set.features}')
+    logging.info(f'Edge features shape : {graph.edge_set.features.shape}')
     logging.info(f'Pressure label shape : {null_pressure.shape}')
 
 
