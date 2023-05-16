@@ -1,4 +1,4 @@
-"""Data classes used by our model"""
+"""Data classes used by our Graph Neural Network"""
 
 from dataclasses import dataclass
 import numpy as np

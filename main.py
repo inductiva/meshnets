@@ -1,4 +1,8 @@
-"""The main file to run our code"""
+"""The main file to run our code
+
+Currently, it loads a mesh from an .obj file, defines a dummy wind vector
+and create a Graph object from them
+"""
 
 from absl import app, flags, logging
 import numpy as np
