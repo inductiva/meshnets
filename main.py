@@ -1,9 +1,10 @@
 """The main file to run our code"""
+
 from absl import app, flags, logging
 import numpy as np
 
-from utils import data_loading
-from utils import data_processing
+from meshnets.utils import data_loading
+from meshnets.utils import data_processing
 
 FLAGS = flags.FLAGS
 
@@ -22,7 +23,7 @@ def main(_):
     node_features = np.tile(wind_vector, (len(nodes), 1))
 
     logging.info('Building the graph from the mesh')
-    graph = data_processing.mesh_to_graph(nodes, node_features, cells)
+    graph = data_processing.triangle_mesh_to_graph(nodes, node_features, cells)
 
     null_pressure = np.zeros(shape=(len(nodes), 1))
 

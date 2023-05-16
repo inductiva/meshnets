@@ -1,15 +1,17 @@
 """Load the mesh data"""
 
+from typing import Tuple
+
 from absl import logging
 import meshio
 import numpy as np
-from typing import Tuple
 
 # TODO(victor): modify the loader once a data format has been decided
 
 
 def load_mesh_from_obj(obj_path: str,
                        verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Load nodes and cells from a .obj file representing a triangle mesh"""
 
     mesh = meshio.read(obj_path)
 

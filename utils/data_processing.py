@@ -1,12 +1,18 @@
 """Process and format the mesh data for our model"""
 
-from datatypes.graph import EdgeSet
-from datatypes.graph import Graph
+from typing import Tuple
 
 import numpy as np
 
+from meshnets.datatypes.graph import EdgeSet
+from meshnets.datatypes.graph import Graph
 
-def _triangles_to_edges(faces):
+
+def _triangles_to_edges(faces: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Return the edges in a mesh of triangular faces.
+
+    Each triangle edge is returned exactly twice, one for each direction.
+    """
 
     edges = np.concatenate([faces[:, 0:2], faces[:, 1:3], faces[:, [0, 2]]],
                            axis=0)
@@ -20,7 +26,13 @@ def _triangles_to_edges(faces):
                             receivers]), np.concatenate([receivers, senders]))
 
 
-def _compute_mesh_features(nodes, senders, receivers):
+def _compute_mesh_features(nodes: np.ndarray, senders: np.ndarray,
+                           receivers: np.ndarray) -> np.ndarray:
+    """Compute mesh features for each edge.
+    
+    displacement vector : sender coords - receiver coords
+    displacement norm : norm of the displacement vector
+    """
 
     send_coords = nodes[senders]
     receive_coords = nodes[receivers]
@@ -32,10 +44,14 @@ def _compute_mesh_features(nodes, senders, receivers):
     return mesh_features
 
 
-def mesh_to_graph(nodes: np.ndarray, node_features: np.ndarray,
-                  cells: np.ndarray) -> Graph:
+def triangle_mesh_to_graph(nodes: np.ndarray, node_features: np.ndarray,
+                           faces: np.ndarray) -> Graph:
+    """Produce a Graph object from triangle mesh data.
 
-    senders, receivers = _triangles_to_edges(cells)
+    Triangle edges exist twice in the Graph, once in each direction.
+    """
+
+    senders, receivers = _triangles_to_edges(faces)
     mesh_features = _compute_mesh_features(nodes, senders, receivers)
     edge_set = EdgeSet(mesh_features, senders, receivers)
 
