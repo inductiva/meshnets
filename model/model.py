@@ -31,7 +31,7 @@ class MeshGraphNet(torch.nn.Module):
 
         self.decoder = GraphDecoder(output_size, latent_size, num_mlp_layers)
 
-    def forward(self, input: np.ndarray[Graph]) -> torch.Tensor:
+    def forward(self, graph_list: np.ndarray[Graph]) -> torch.Tensor:
         """Sequentially apply the MeshGraphNet to each Graph object
         in the input list.
         
@@ -40,7 +40,7 @@ class MeshGraphNet(torch.nn.Module):
         # TODO(victor): normalize data
 
         output = []
-        for graph in input:
+        for graph in graph_list:
             latent_graph = self.encoder(graph)
             latent_graph = self.processor(latent_graph)
             pred = self.decoder(latent_graph)
