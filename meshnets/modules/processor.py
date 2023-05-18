@@ -4,6 +4,7 @@ import torch
 from torch.nn import Identity
 
 class GraphProcessor(torch.nn.Module):
+    """"GraphProcessor class."""
 
     def __init__(self, latent_size, message_passing_steps):
         super().__init__()

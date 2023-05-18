@@ -4,6 +4,7 @@ import torch
 from torch.nn import Identity
 
 class GraphDecoder(torch.nn.Module):
+    """"GraphDecoder class."""
 
     def __init__(self, output_size, latent_size, num_mlp_layers):
         super().__init__()
