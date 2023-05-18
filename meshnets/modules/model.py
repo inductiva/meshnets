@@ -5,9 +5,9 @@ from typing import List
 import torch
 
 from meshnets.datatypes.graph import Graph
-from meshnets.model.encoder import GraphEncoder
-from meshnets.model.decoder import GraphDecoder
-from meshnets.model.processor import GraphProcessor
+from meshnets.modules.encoder import GraphEncoder
+from meshnets.modules.decoder import GraphDecoder
+from meshnets.modules.processor import GraphProcessor
 
 
 class MeshGraphNet(torch.nn.Module):
