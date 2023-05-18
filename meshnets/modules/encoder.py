@@ -1,4 +1,11 @@
 """"Define the GraphEncoder class."""
 
-class GraphEncoder:
-    pass
+import torch
+
+class GraphEncoder(torch.nn.Module):
+
+    def __init__(self, **args):
+        super().__init__(**args)
+
+    def forward(self, graph):
+        return graph

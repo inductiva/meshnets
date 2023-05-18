@@ -1,4 +1,11 @@
-""""Define the GraphProcessor and ProcesserLayer classes."""
+""""Define the GraphProcessor class."""
 
-class GraphProcessor:
-    pass
+import torch
+
+class GraphProcessor(torch.nn.Module):
+
+    def __init__(self, **args):
+        super().__init__(**args)
+
+    def forward(self, graph):
+        return graph
