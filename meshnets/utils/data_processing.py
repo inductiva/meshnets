@@ -46,6 +46,6 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
                 y=node_labels,
                 pos=node_coordinates)
     graph = FaceToEdge(remove_faces=True)(mesh)
-    graph = _compute_edge_attributes(graph, remove_pos=False)
+    graph = _compute_edge_attributes(graph, remove_pos=True)
 
     return graph
