@@ -25,15 +25,16 @@ def main(_):
     wind_vector = (10, 0, 0)  # dummy wind vector along the X-axis
     # node features for each node are the wind vector
     node_features = np.tile(wind_vector, (len(nodes), 1))
-
-    logging.info('Building the graph from the mesh')
-    graph = data_processing.triangle_mesh_to_graph(nodes, node_features, cells)
-
     null_pressure = np.zeros(shape=(len(nodes), 1))
 
-    logging.info('Node features shape : %s', graph.node_features.shape)
-    logging.info('Pressure label shape : %s', null_pressure.shape)
-    logging.info('Edge features shape : %s', graph.edge_set.features.shape)
+    logging.info('Building the graph from the mesh')
+    graph = data_processing.triangle_mesh_to_graph(nodes, node_features, cells,
+                                                   null_pressure)
+
+    logging.info('Node features shape : %s', graph.x.shape)
+    logging.info('Edge index shape : %s', graph.edge_index.shape)
+    logging.info('Edge features shape : %s', graph.edge_attr.shape)
+    logging.info('Pressure label shape : %s', graph.y.shape)
 
 
 if __name__ == '__main__':

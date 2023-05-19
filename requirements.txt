@@ -1,2 +1,4 @@
 absl-py
 pyvista
+torch
+torch_geometric

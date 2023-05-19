@@ -1,60 +1,51 @@
 """Process and format the mesh data for our model"""
 
-from typing import Tuple
-
 import numpy as np
-
-from meshnets.datatypes.graph import EdgeSet
-from meshnets.datatypes.graph import Graph
-
-
-def _triangles_to_edges(faces: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """Return the edges in a mesh of triangular faces.
-
-    Each triangle edge is returned exactly twice, one for each direction.
-    """
-
-    edges = np.concatenate([faces[:, 0:2], faces[:, 1:3], faces[:, [0, 2]]],
-                           axis=0)
-
-    edges = np.sort(edges, axis=1)
-    unique_edges = np.unique(edges, axis=0)
-
-    senders, receivers = unique_edges[:, 0], unique_edges[:, 1]
-
-    return (np.concatenate([senders,
-                            receivers]), np.concatenate([receivers, senders]))
+import torch
+from torch_geometric.data import Data
+from torch_geometric.transforms.face_to_edge import FaceToEdge
 
 
-def _compute_mesh_features(nodes: np.ndarray, senders: np.ndarray,
-                           receivers: np.ndarray) -> np.ndarray:
-    """Compute mesh features for each edge.
+def _compute_edge_attributes(data: Data, remove_pos: bool = True) -> Data:
+    """Compute edge attributes for each edge of the graph.
     
-    displacement vector : sender coords - receiver coords
-    displacement norm : norm of the displacement vector
-    """
+    The edge attributes are the displacement vector between the two nodes
+    of an edge and the norm of the displacement vector."""
 
-    send_coords = nodes[senders]
-    receive_coords = nodes[receivers]
+    src, dst = data.edge_index
 
-    displacement = send_coords - receive_coords
-    norm = np.linalg.norm(displacement, axis=1)
-    mesh_features = np.column_stack([displacement, norm])
+    src_pos = data.pos[src]
+    dst_pos = data.pos[dst]
 
-    return mesh_features
+    displacement_vector = dst_pos - src_pos
+    displacement_norm = torch.norm(displacement_vector, dim=1).unsqueeze(1)
+
+    data.edge_attr = torch.cat([displacement_vector, displacement_norm], dim=1)
+
+    if remove_pos:
+        data.pos = None
+
+    return data
 
 
-def triangle_mesh_to_graph(nodes: np.ndarray, node_features: np.ndarray,
-                           faces: np.ndarray) -> Graph:
-    """Produce a Graph object from triangle mesh data.
+def triangle_mesh_to_graph(node_coordinates: np.ndarray,
+                           node_features: np.ndarray, faces: np.ndarray,
+                           node_labels: np.ndarray) -> Data:
+    """Produce an undirected graph object from triangle mesh data.
+    
+    The graph includes node features, edges indices, edge attributes
+    and ground-truth label."""
 
-    Triangle edges exist twice in the Graph, once in each direction.
-    """
+    node_coordinates = torch.Tensor(node_coordinates)
+    node_features = torch.Tensor(node_features)
+    faces = torch.LongTensor(faces.T)
+    node_labels = torch.Tensor(node_labels)
 
-    senders, receivers = _triangles_to_edges(faces)
-    mesh_features = _compute_mesh_features(nodes, senders, receivers)
-    edge_set = EdgeSet(mesh_features, senders, receivers)
-
-    graph = Graph(node_features, edge_set)
+    mesh = Data(x=node_features,
+                face=faces,
+                y=node_labels,
+                pos=node_coordinates)
+    graph = FaceToEdge(remove_faces=True)(mesh)
+    graph = _compute_edge_attributes(graph, remove_pos=True)
 
     return graph
