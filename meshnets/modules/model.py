@@ -31,7 +31,9 @@ class MeshGraphNet(torch.nn.Module):
         self.decoder = GraphDecoder(output_size, latent_size, num_mlp_layers)
 
     def forward(self, data: Batch) -> torch.Tensor:
-        """Apply the MeshGraphNet to a batch of graphs."""
+        """Apply the MeshGraphNet to a batch of graphs.
+        
+        Return the prediction tensor."""
 
         # TODO(victor): normalize data
 
