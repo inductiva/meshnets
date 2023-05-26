@@ -1,4 +1,4 @@
-"""Load the mesh data"""
+""""Methods for loading mesh data"""
 
 from typing import Tuple
 
@@ -6,12 +6,13 @@ from absl import logging
 import meshio
 import numpy as np
 
-# TODO(victor): modify the loader once a data format has been decided
 
-
-def load_mesh_from_obj(obj_path: str,
+def load_triangle_mesh(obj_path: str,
                        verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
-    """Load nodes and cells from a .obj file representing a triangle mesh"""
+    """Load nodes and cells from a mesh file representing a triangle mesh.
+    
+    This method is deprecated and only works for meshes composed of triangle
+    faces only."""
 
     mesh = meshio.read(obj_path)
 
@@ -25,5 +26,4 @@ def load_mesh_from_obj(obj_path: str,
     return nodes, cells
 
 
-# TODO(victor): Load pressure label
 # TODO(victor): Load windspeed tuple
