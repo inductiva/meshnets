@@ -6,6 +6,39 @@ from typing import Tuple
 from absl import logging
 import meshio
 import numpy as np
+import pyvista as pv
+
+
+def load_edge_mesh_pv(
+    obj_path: str,
+    get_pressure: bool = True,
+    verbose: bool = False
+) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray,
+                                                            np.ndarray]]:
+    """Extract node coordinates, edges and pressure at nodes from a mesh file
+    using pyvista."""
+
+    mesh = pv.read(obj_path)
+    # `use_all_points=False` discards duplicates and renumber the nodes
+    # TODO(victor): verify that node pressure array is modified accordingly
+    # WARNING: the remeshing should be done prior on the mesh file, not here
+    edge_mesh = mesh.extract_all_edges(use_all_points=True)
+
+    nodes = edge_mesh.points
+    edge_list = edge_mesh.lines.reshape((-1, 3))[:, 1:]
+
+    if verbose:
+        logging.info('Nodes shape : %s', nodes.shape)
+        logging.info('Edge list shape : %s', edge_list.shape)
+
+    if get_pressure:
+        pressure = edge_mesh.get_array('p', preference='point')
+        if verbose:
+            logging.info('Pressure shape : %s', pressure.shape)
+
+        return nodes, edge_list, pressure
+    else:
+        return nodes, edge_list
 
 
 def load_edge_mesh_meshio(
