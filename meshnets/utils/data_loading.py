@@ -32,7 +32,8 @@ def load_edge_mesh_pv(
         logging.info('Edge list shape : %s', edge_list.shape)
 
     if get_pressure:
-        pressure = edge_mesh.get_array('p', preference='point')
+        # TODO(victor): decide if array reshape is necessary
+        pressure = edge_mesh.get_array('p', preference='point').reshape(-1, 1)
         if verbose:
             logging.info('Pressure shape : %s', pressure.shape)
 
@@ -85,7 +86,8 @@ def load_edge_mesh_meshio(
         logging.info('Edge list shape : %s', edges.shape)
 
     if get_pressure:
-        pressure = mesh.point_data['p']
+        # same behavior as mesh.points
+        pressure = mesh.point_data['p'].byteswap().newbyteorder('<')
         if verbose:
             logging.info('Pressure shape : %s', pressure.shape)
 
