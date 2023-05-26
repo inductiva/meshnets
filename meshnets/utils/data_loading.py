@@ -1,10 +1,64 @@
 """"Methods for loading mesh data"""
 
+from typing import Union
 from typing import Tuple
 
 from absl import logging
 import meshio
 import numpy as np
+
+
+def load_edge_mesh_meshio(
+    obj_path: str,
+    get_pressure: bool = True,
+    verbose: bool = False
+) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray,
+                                                            np.ndarray]]:
+    """Extract node coordinates, edges and pressure at nodes from a mesh file
+    using meshio.
+    
+    Edges can include duplicates.
+    """
+
+    mesh = meshio.read(obj_path)
+    # `byteswap().newbyteorder('<')` is required because the mesh points array
+    # is sometimes in big endian byte order, which is not supported by torch
+    # Behavior observed on .vtk files
+    # TODO: this should probably be avoided at file level
+    nodes = mesh.points.byteswap().newbyteorder('<')
+
+    # extract all the edges in the mesh
+    edges_list = []
+    for cell in mesh.cells:
+        cell_faces = cell.data
+        shape_vertices_nb = cell_faces.shape[1]
+
+        for i in range(shape_vertices_nb - 1):
+            edges_list.append(cell_faces[:, i:(i + 2)])
+        if shape_vertices_nb > 2:
+            # get the edge between the first and last node of the faces
+            edges_list.append(cell_faces[:, ::(shape_vertices_nb - 1)])
+
+        # a bit easier to read but runs approximately 10 times slower
+        # for i in range(shape_vertices_nb - 1):
+        #     edges_list.append(cell_faces[:, [i, i + 1]])
+        # if shape_vertices_nb > 2:
+        #     edges_list.append(cell_faces[:, [0, -1]])
+
+    edges = np.concatenate(edges_list, axis=0)
+
+    if verbose:
+        logging.info('Nodes shape : %s', nodes.shape)
+        logging.info('Edge list shape : %s', edges.shape)
+
+    if get_pressure:
+        pressure = mesh.point_data['p']
+        if verbose:
+            logging.info('Pressure shape : %s', pressure.shape)
+
+        return nodes, edges, pressure
+    else:
+        return nodes, edges
 
 
 def load_triangle_mesh(obj_path: str,
