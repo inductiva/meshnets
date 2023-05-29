@@ -47,15 +47,15 @@ def edge_mesh_to_graph(node_coordinates: np.ndarray,
     The graph includes node features, edges indices, edge attributes
     and optionally node labels."""
 
-    node_coordinates = torch.Tensor(node_coordinates)
-    node_features = torch.Tensor(node_features)
+    node_coordinates = torch.tensor(node_coordinates, dtype=torch.float32)
+    node_features = torch.tensor(node_features, dtype=torch.float32)
 
     # Ensure a bidirectional graph with no duplicated edges
     #pylint: disable = no-value-for-parameter
-    edge_index = to_undirected(torch.LongTensor(edges.T))
+    edge_index = to_undirected(torch.tensor(edges.T, dtype=torch.int64))
 
     if node_labels is not None:
-        node_labels = torch.Tensor(node_labels)
+        node_labels = torch.tensor(node_labels, dtype=torch.float32)
 
     graph = Data(x=node_features,
                  edge_index=edge_index,
@@ -83,12 +83,12 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
     The graph includes node features, edges indices, edge attributes
     and optionally node labels."""
 
-    node_coordinates = torch.Tensor(node_coordinates)
-    node_features = torch.Tensor(node_features)
-    faces = torch.LongTensor(faces.T)
+    node_coordinates = torch.tensor(node_coordinates, dtype=torch.float32)
+    node_features = torch.tensor(node_features, dtype=torch.float32)
+    faces = torch.tensor(faces.T, dtype=torch.int64)
 
     if node_labels is not None:
-        node_labels = torch.Tensor(node_labels)
+        node_labels = torch.tensor(node_labels, dtype=torch.float32)
 
     mesh = Data(x=node_features,
                 face=faces,
