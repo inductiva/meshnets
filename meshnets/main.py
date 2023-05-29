@@ -1,7 +1,7 @@
 """The main file to run our code
 
-Currently, it visuzalises a mesh object from a .vtk file, loads the mesh data,
-defines its wind vector, and create a Graph object from them
+Currently, it loads mesh data from a .vtk file, defines a wind vector,
+and create a Graph object from them
 """
 
 from absl import app, flags, logging
