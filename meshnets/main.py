@@ -1,35 +1,35 @@
 """The main file to run our code
 
 Currently, it loads mesh data from a .vtk file, defines a wind vector,
-and create a Graph object from them
+and creates a Graph object from them
 """
+
+import os
 
 from absl import app, flags, logging
 import numpy as np
 
 from meshnets.utils import data_loading
 from meshnets.utils import data_processing
-#from meshnets.utils import data_visualization
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('input_object', 'data/blob.vtk',
+flags.DEFINE_string('input_object', os.path.join('data', 'blob.vtk'),
                     'File path of the object to be visualized')
+
+# Wind vector associated with the simulation
+WIND_VECTOR = (10, 0, 0)
 
 
 def main(_):
-
-    #data_visualization.plot_data(FLAGS.input_object, verbose=True)
 
     logging.info('Loading the mesh data from %s', FLAGS.input_object)
     mesh = data_loading.load_edge_mesh_pv(FLAGS.input_object,
                                           get_pressure=True,
                                           verbose=False)
     nodes, edges, pressure = mesh[0], mesh[1], mesh[2]
-    #nodes, edges, pressure = mesh[0], mesh[1], None
 
-    wind_vector = (10, 0, 0)  # wind vector along the X-axis
     # node features for each node are the wind vector
-    node_features = np.tile(wind_vector, (len(nodes), 1))
+    node_features = np.tile(WIND_VECTOR, (len(nodes), 1))
 
     logging.info('Building graph from the mesh data')
     graph = data_processing.edge_mesh_to_graph(nodes, node_features, edges,
