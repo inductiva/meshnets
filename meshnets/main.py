@@ -1,6 +1,6 @@
 """The main file to run our code
 
-Currently, it visuzalises a mesh object from a .vtk, loads the mesh data,
+Currently, it visuzalises a mesh object from a .vtk file, loads the mesh data,
 defines its wind vector, and create a Graph object from them
 """
 
@@ -9,7 +9,7 @@ import numpy as np
 
 from meshnets.utils import data_loading
 from meshnets.utils import data_processing
-from meshnets.utils import data_visualization
+#from meshnets.utils import data_visualization
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('input_object', 'data/blob.vtk',
@@ -18,12 +18,12 @@ flags.DEFINE_string('input_object', 'data/blob.vtk',
 
 def main(_):
 
-    data_visualization.plot_data(FLAGS.input_object, verbose=True)
+    #data_visualization.plot_data(FLAGS.input_object, verbose=True)
 
     logging.info('Loading the mesh data from %s', FLAGS.input_object)
-    mesh = data_loading.load_edge_mesh_meshio(FLAGS.input_object,
-                                              get_pressure=True,
-                                              verbose=False)
+    mesh = data_loading.load_edge_mesh_pv(FLAGS.input_object,
+                                          get_pressure=True,
+                                          verbose=False)
     nodes, edges, pressure = mesh[0], mesh[1], mesh[2]
     #nodes, edges, pressure = mesh[0], mesh[1], None
 
