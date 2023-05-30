@@ -1,8 +1,11 @@
 """Process and format the mesh data for our model"""
 
+from typing import Optional
+
 import numpy as np
 import torch
 from torch_geometric.data import Data
+from torch_geometric.utils import to_undirected
 from torch_geometric.transforms.face_to_edge import FaceToEdge
 
 
@@ -28,18 +31,64 @@ def _compute_edge_attributes(data: Data, remove_pos: bool = True) -> Data:
     return data
 
 
+def edge_mesh_to_graph(node_coordinates: np.ndarray,
+                       node_features: np.ndarray,
+                       edges: np.ndarray,
+                       node_labels: Optional[np.ndarray] = None) -> Data:
+    """Produce an undirected graph object from edge mesh data and compute
+    its edge features.
+
+    Args shape:
+        node_coordinates: (nb_nodes, nb_space_dim)
+        node_features: (nb_nodes, nb_node_features)
+        edges: (nb_edges, 2)
+        node_labels: (nb_nodes, nb_node_labes)
+
+    The graph includes node features, edges indices, edge attributes
+    and optionally node labels."""
+
+    node_coordinates = torch.tensor(node_coordinates, dtype=torch.float32)
+    node_features = torch.tensor(node_features, dtype=torch.float32)
+
+    # Ensure a bidirectional graph with no duplicated edges
+    #pylint: disable = no-value-for-parameter
+    edge_index = to_undirected(torch.tensor(edges.T, dtype=torch.int64))
+
+    if node_labels is not None:
+        node_labels = torch.tensor(node_labels, dtype=torch.float32)
+
+    graph = Data(x=node_features,
+                 edge_index=edge_index,
+                 y=node_labels,
+                 pos=node_coordinates)
+
+    graph = _compute_edge_attributes(graph, remove_pos=True)
+
+    return graph
+
+
 def triangle_mesh_to_graph(node_coordinates: np.ndarray,
-                           node_features: np.ndarray, faces: np.ndarray,
-                           node_labels: np.ndarray) -> Data:
-    """Produce an undirected graph object from triangle mesh data.
+                           node_features: np.ndarray,
+                           faces: np.ndarray,
+                           node_labels: Optional[np.ndarray] = None) -> Data:
+    """Produce an undirected graph object from triangle mesh data and compute
+    its edge features.
+
+    Args shape:
+        node_coordinates: (nb_nodes, nb_space_dim)
+        node_features: (nb_nodes, nb_node_features)
+        faces: (nb_faces, 3)
+        node_labels: (nb_nodes, nb_node_labes)
     
     The graph includes node features, edges indices, edge attributes
-    and ground-truth label."""
+    and optionally node labels."""
 
-    node_coordinates = torch.Tensor(node_coordinates)
-    node_features = torch.Tensor(node_features)
-    faces = torch.LongTensor(faces.T)
-    node_labels = torch.Tensor(node_labels)
+    node_coordinates = torch.tensor(node_coordinates, dtype=torch.float32)
+    node_features = torch.tensor(node_features, dtype=torch.float32)
+    faces = torch.tensor(faces.T, dtype=torch.int64)
+
+    if node_labels is not None:
+        node_labels = torch.tensor(node_labels, dtype=torch.float32)
 
     mesh = Data(x=node_features,
                 face=faces,
