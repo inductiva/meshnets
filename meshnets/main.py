@@ -5,41 +5,47 @@ and creates a Graph object from them
 """
 
 import os
+from pathlib import Path
 
 from absl import app, flags, logging
-import numpy as np
+import torch
+from torch_geometric.loader import DataLoader
 
-from meshnets.utils import data_loading
 from meshnets.utils import data_processing
+from meshnets.utils.datasets import FromDiskGraphDataset
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('input_object', os.path.join('data', 'blob.vtk'),
-                    'File path of the object to be visualized')
+flags.DEFINE_string('raw_data_dir', os.path.join('data', 'vtk'),
+                    'Path to the folder containing the raw data files')
+flags.DEFINE_string('processed_data_dir', os.path.join('data', 'pt'),
+                    'Path to the folder for the processed data files')
+flags.DEFINE_bool('process_raw', False,
+                  'Indicate if the raw data must be processed or not')
 
-# Wind vector associated with the simulation
+# Wind vector associated with the simulations
 WIND_VECTOR = (10, 0, 0)
 
 
 def main(_):
 
-    logging.info('Loading the mesh data from %s', FLAGS.input_object)
-    mesh = data_loading.load_edge_mesh_pv(FLAGS.input_object,
-                                          get_pressure=True,
-                                          verbose=False)
-    nodes, edges, pressure = mesh[0], mesh[1], mesh[2]
+    logging.info('Process the raw data : %s', FLAGS.process_raw)
+    if FLAGS.process_raw:
+        for raw_file in os.listdir(FLAGS.raw_data_dir):
 
-    # node features for each node are the wind vector
-    node_features = np.tile(WIND_VECTOR, (len(nodes), 1))
+            raw_file_path = os.path.join(FLAGS.raw_data_dir, raw_file)
+            processed_graph = data_processing.mesh_file_to_graph_data(
+                raw_file_path, WIND_VECTOR)
 
-    logging.info('Building graph from the mesh data')
-    graph = data_processing.edge_mesh_to_graph(nodes, node_features, edges,
-                                               pressure)
+            processed_file = Path(raw_file).with_suffix('.pt')
+            processed_file_path = os.path.join(FLAGS.processed_data_dir,
+                                               processed_file)
 
-    logging.info('Node features shape : %s', graph.x.shape)
-    logging.info('Edge index shape : %s', graph.edge_index.shape)
-    logging.info('Edge features shape : %s', graph.edge_attr.shape)
-    if graph.y is not None:
-        logging.info('Pressure label shape : %s', graph.y.shape)
+            torch.save(processed_graph, processed_file_path)
+
+    dataset = FromDiskGraphDataset(FLAGS.processed_data_dir)
+    dataloader = DataLoader(dataset, batch_size=5, shuffle=True)
+    for batch in dataloader:
+        logging.info(batch)
 
 
 if __name__ == '__main__':

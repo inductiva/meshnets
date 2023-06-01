@@ -2,11 +2,14 @@
 
 from typing import Optional
 
+from absl import logging
 import numpy as np
 import torch
 from torch_geometric.data import Data
 from torch_geometric.utils import to_undirected
 from torch_geometric.transforms.face_to_edge import FaceToEdge
+
+from meshnets.utils import data_loading
 
 
 def _compute_edge_attributes(data: Data, remove_pos: bool = True) -> Data:
@@ -96,5 +99,30 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
                 pos=node_coordinates)
     graph = FaceToEdge(remove_faces=True)(mesh)
     graph = _compute_edge_attributes(graph, remove_pos=True)
+
+    return graph
+
+
+def mesh_file_to_graph_data(file_path, wind_vector, verbose=False):
+    if verbose:
+        logging.info('Loading the mesh data from %s', file_path)
+    mesh = data_loading.load_edge_mesh_pv(file_path,
+                                          get_pressure=True,
+                                          verbose=False)
+    nodes, edges, pressure = mesh[0], mesh[1], mesh[2]
+
+    # node features for each node are the wind vector
+    node_features = np.tile(wind_vector, (len(nodes), 1))
+
+    if verbose:
+        logging.info('Building graph from the mesh data')
+    graph = edge_mesh_to_graph(nodes, node_features, edges, pressure)
+
+    if verbose:
+        logging.info('Node features shape : %s', graph.x.shape)
+        logging.info('Edge index shape : %s', graph.edge_index.shape)
+        logging.info('Edge features shape : %s', graph.edge_attr.shape)
+        if graph.y is not None:
+            logging.info('Pressure label shape : %s', graph.y.shape)
 
     return graph
