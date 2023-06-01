@@ -17,7 +17,9 @@ def load_edge_mesh_pv(
 ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray,
                                                             np.ndarray]]:
     """Extract node coordinates, edges and pressure at nodes from a mesh file
-    using pyvista."""
+    using pyvista.
+    
+    If `get_pressure=False`, the returned pressure will be None."""
 
     mesh = pv.read(obj_path)
 
@@ -49,7 +51,9 @@ def load_edge_mesh_pv(
 
         return nodes, edge_list, pressure
     else:
-        return nodes, edge_list
+        if verbose:
+            logging.info('Pressure is : %s', None)
+        return nodes, edge_list, None
 
 
 def edges_from_meshio_mesh(mesh: Mesh) -> np.ndarray:
@@ -86,7 +90,9 @@ def load_edge_mesh_meshio(
     """Extract node coordinates, edges and pressure at nodes from a mesh file
     using meshio.
     
-    Edges can include duplicates.
+    If `get_pressure=False`, the returned pressure will be None.
+
+    Edges can include duplicates. 
     """
 
     mesh = meshio.read(obj_path)
@@ -115,7 +121,9 @@ def load_edge_mesh_meshio(
 
         return nodes, edges, pressure
     else:
-        return nodes, edges
+        if verbose:
+            logging.info('Pressure is : %s', None)
+        return nodes, edges, None
 
 
 def load_triangle_mesh(obj_path: str,

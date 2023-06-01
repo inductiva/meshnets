@@ -1,6 +1,7 @@
 """Process and format the mesh data for our model"""
 
 from typing import Optional
+from typing import Tuple
 
 from absl import logging
 import numpy as np
@@ -103,13 +104,14 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
     return graph
 
 
-def mesh_file_to_graph_data(file_path, wind_vector, verbose=False):
+def mesh_file_to_graph_data(file_path: str,
+                            wind_vector: Tuple[float],
+                            get_pressure: bool = False,
+                            verbose: bool = False) -> Data:
     if verbose:
         logging.info('Loading the mesh data from %s', file_path)
-    mesh = data_loading.load_edge_mesh_pv(file_path,
-                                          get_pressure=True,
-                                          verbose=False)
-    nodes, edges, pressure = mesh[0], mesh[1], mesh[2]
+    nodes, edges, pressure = data_loading.load_edge_mesh_pv(
+        file_path, get_pressure=get_pressure, verbose=verbose)
 
     # node features for each node are the wind vector
     node_features = np.tile(wind_vector, (len(nodes), 1))

@@ -5,7 +5,7 @@ import torch
 from torch_geometric.data import Dataset
 
 
-class FromDiskGraphDataset(Dataset):
+class FromDiskDataset(Dataset):
     """Reads a dataset from a given directory.
 
     The examples are stored in `data_dir` as .pt files. The .pt
