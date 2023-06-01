@@ -5,7 +5,7 @@ from torch_geometric.data import Batch
 
 from meshnets.modules.encoder import GraphEncoder
 from meshnets.modules.decoder import GraphDecoder
-from meshnets.modules.processor import GraphProcessor
+from meshnets.modules.processor import MGNProcessor
 
 
 class MeshGraphNet(torch.nn.Module):
@@ -26,7 +26,7 @@ class MeshGraphNet(torch.nn.Module):
         self.encoder = GraphEncoder(node_features_size, mesh_features_size,
                                     latent_size, num_mlp_layers)
 
-        self.processor = GraphProcessor(latent_size, message_passing_steps)
+        self.processor = MGNProcessor(latent_size, message_passing_steps)
 
         self.decoder = GraphDecoder(output_size, latent_size, num_mlp_layers)
 
