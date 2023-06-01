@@ -7,7 +7,7 @@ from torch_geometric.nn.conv import MessagePassing
 
 
 class MGNProcessorLayer(MessagePassing):
-    """Single Message Passing layer for a Graph object."""
+    """Single MGN Message Passing layer for a Graph object."""
 
     def __init__(self, latent_size):
         super().__init__()
@@ -20,9 +20,9 @@ class MGNProcessorLayer(MessagePassing):
 
 
 class MGNProcessor(torch.nn.Module):
-    """Processor for latent Graph object.
+    """MGN Processor for graphs.
     
-    It is a sequence of message-passing ProcessorLayers applied to the
+    It is a sequence of message-passing MGNProcessorLayers applied to the
     the latent node and mesh features."""
 
     def __init__(self, latent_size, message_passing_steps):
@@ -34,7 +34,7 @@ class MGNProcessor(torch.nn.Module):
         self.processor = Identity(latent_size, message_passing_steps)
 
     def forward(self, graph: Batch) -> Batch:
-        """Apply the GraphProcessor to a Graph object.
+        """Apply the GraphProcessor to a batch of graphs.
         
-        Return a Graph object with processed features."""
+        Return the batch with processed features."""
         return self.processor(graph)
