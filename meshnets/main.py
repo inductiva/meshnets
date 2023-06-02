@@ -32,11 +32,11 @@ def main(_):
 
     logging.info('Process the mesh data : %s', FLAGS.process_meshes)
     if FLAGS.process_meshes:
-        data_processing.mesh_dataset_to_graph_dataset(FLAGS.mesh_data_dir,
-                                                      FLAGS.processed_data_dir,
-                                                      WIND_VECTOR,
-                                                      get_pressure=True,
-                                                      verbose=False)
+        data_processing.mesh_files_to_graph_files(FLAGS.mesh_data_dir,
+                                                  FLAGS.processed_data_dir,
+                                                  WIND_VECTOR,
+                                                  get_pressure=True,
+                                                  verbose=False)
 
     dataset = FromDiskDataset(FLAGS.processed_data_dir)
     train_dataset, test_dataset = random_split(dataset, [0.8, 0.2])

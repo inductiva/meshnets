@@ -142,11 +142,11 @@ def mesh_file_to_graph_data(file_path: str,
     return graph
 
 
-def mesh_dataset_to_graph_dataset(mesh_data_dir: str,
-                                  processed_data_dir: str,
-                                  wind_vector: Tuple[float],
-                                  get_pressure: bool = True,
-                                  verbose: bool = False) -> None:
+def mesh_files_to_graph_files(mesh_data_dir: str,
+                              processed_data_dir: str,
+                              wind_vector: Tuple[float],
+                              get_pressure: bool = True,
+                              verbose: bool = False) -> None:
     """Loop through a directory containing mesh files, produce a
     graph representation of each mesh and save the graph as
     a `.pt` file in the processed data directory."""
