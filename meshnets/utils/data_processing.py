@@ -1,12 +1,18 @@
 """Process and format the mesh data for our model"""
 
+import os
+from pathlib import Path
 from typing import Optional
+from typing import Tuple
 
+from absl import logging
 import numpy as np
 import torch
 from torch_geometric.data import Data
 from torch_geometric.utils import to_undirected
 from torch_geometric.transforms.face_to_edge import FaceToEdge
+
+from meshnets.utils import data_loading
 
 
 def _compute_edge_attributes(data: Data, remove_pos: bool = True) -> Data:
@@ -98,3 +104,64 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
     graph = _compute_edge_attributes(graph, remove_pos=True)
 
     return graph
+
+
+def mesh_file_to_graph_data(file_path: str,
+                            wind_vector: Tuple[float],
+                            get_pressure: bool = True,
+                            verbose: bool = False) -> Data:
+    """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
+    a wind vector.
+    
+    Return a graph Data object with the following attributes:
+        x: Node feature matrix
+        edge_index: Graph connectivity in COO format
+        edge_attr: Edge feature matrix
+        y [Optional]: Graph-level or node-level ground-truth
+    """
+
+    if verbose:
+        logging.info('Loading mesh data from %s', file_path)
+    nodes, edges, pressure = data_loading.load_edge_mesh_pv(
+        file_path, get_pressure=get_pressure, verbose=verbose)
+
+    # node features for each node are the wind vector
+    node_features = np.tile(wind_vector, (len(nodes), 1))
+
+    if verbose:
+        logging.info('Building graph from the mesh data')
+    graph = edge_mesh_to_graph(nodes, node_features, edges, pressure)
+
+    if verbose:
+        logging.info('Node features shape : %s', graph.x.shape)
+        logging.info('Edge index shape : %s', graph.edge_index.shape)
+        logging.info('Edge features shape : %s', graph.edge_attr.shape)
+        if graph.y is not None:
+            logging.info('Pressure label shape : %s', graph.y.shape)
+
+    return graph
+
+
+def mesh_files_to_graph_files(mesh_data_dir: str,
+                              processed_data_dir: str,
+                              wind_vector: Tuple[float],
+                              get_pressure: bool = True,
+                              verbose: bool = False) -> None:
+    """Loop through a directory containing mesh files, produce a
+    graph representation of each mesh and save the graph as
+    a `.pt` file in the processed data directory."""
+
+    for mesh_file in os.listdir(mesh_data_dir):
+
+        mesh_file_path = os.path.join(mesh_data_dir, mesh_file)
+        processed_graph = mesh_file_to_graph_data(mesh_file_path,
+                                                  wind_vector,
+                                                  get_pressure=get_pressure,
+                                                  verbose=verbose)
+
+        processed_file = Path(mesh_file).with_suffix('.pt')
+        processed_file_path = os.path.join(processed_data_dir, processed_file)
+
+        if verbose:
+            logging.info('Saving graph objecto to : %s', processed_file_path)
+        torch.save(processed_graph, processed_file_path)
