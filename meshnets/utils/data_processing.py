@@ -1,5 +1,7 @@
 """Process and format the mesh data for our model"""
 
+import os
+from pathlib import Path
 from typing import Optional
 from typing import Tuple
 
@@ -106,10 +108,20 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
 
 def mesh_file_to_graph_data(file_path: str,
                             wind_vector: Tuple[float],
-                            get_pressure: bool = False,
+                            get_pressure: bool = True,
                             verbose: bool = False) -> Data:
+    """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
+    a wind vector.
+    
+    Return a graph Data object with the following attributes:
+        x: Node feature matrix
+        edge_index: Graph connectivity in COO format
+        edge_attr: Edge feature matrix
+        y [Optional]: Graph-level or node-level ground-truth
+    """
+
     if verbose:
-        logging.info('Loading the mesh data from %s', file_path)
+        logging.info('Loading mesh data from %s', file_path)
     nodes, edges, pressure = data_loading.load_edge_mesh_pv(
         file_path, get_pressure=get_pressure, verbose=verbose)
 
@@ -128,3 +140,28 @@ def mesh_file_to_graph_data(file_path: str,
             logging.info('Pressure label shape : %s', graph.y.shape)
 
     return graph
+
+
+def mesh_dataset_to_graph_dataset(mesh_data_dir: str,
+                                  processed_data_dir: str,
+                                  wind_vector: Tuple[float],
+                                  get_pressure: bool = True,
+                                  verbose: bool = False) -> None:
+    """Loop through a directory containing mesh files, produce a
+    graph representation of each mesh and save the graph as
+    a `.pt` file in the processed data directory."""
+
+    for mesh_file in os.listdir(mesh_data_dir):
+
+        mesh_file_path = os.path.join(mesh_data_dir, mesh_file)
+        processed_graph = mesh_file_to_graph_data(mesh_file_path,
+                                                  wind_vector,
+                                                  get_pressure=get_pressure,
+                                                  verbose=verbose)
+
+        processed_file = Path(mesh_file).with_suffix('.pt')
+        processed_file_path = os.path.join(processed_data_dir, processed_file)
+
+        if verbose:
+            logging.info('Saving graph objecto to : %s', processed_file_path)
+        torch.save(processed_graph, processed_file_path)
