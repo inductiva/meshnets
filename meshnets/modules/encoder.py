@@ -30,7 +30,7 @@ class GraphEncoder(torch.nn.Module):
         
         Return the enconded batch."""
 
-        graph.node_features = self.node_encoder(graph.node_features)
-        graph.edge_set.features = self.edge_encoder(graph.edge_set.features)
+        graph.x = self.node_encoder(graph.x)
+        graph.edge_attr = self.edge_encoder(graph.edge_attr)
 
         return graph
