@@ -163,5 +163,5 @@ def mesh_files_to_graph_files(mesh_data_dir: str,
         processed_file_path = os.path.join(processed_data_dir, processed_file)
 
         if verbose:
-            logging.info('Saving graph objecto to : %s', processed_file_path)
+            logging.info('Saving graph object to : %s', processed_file_path)
         torch.save(processed_graph, processed_file_path)
