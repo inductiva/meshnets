@@ -17,6 +17,8 @@ class MGNLightningWrapper(pl.LightningModule):
         loss = self.compute_loss(batch)
         # batch_size can vary depending on the number of nodes in the graphs
         # so we pass it explicitly to the logger
+        # TODO(victor): check that batch_size is set correctly or if it
+        # should be the number of graphs in the batch
         self.log('loss', loss, on_epoch=True, batch_size=batch.num_nodes)
         return {'loss': loss}
 
@@ -24,10 +26,13 @@ class MGNLightningWrapper(pl.LightningModule):
         val_loss = self.compute_loss(batch)
         # batch_size can vary depending on the number of nodes in the graphs
         # so we pass it explicitly to the logger
+        # TODO(victor): check that batch_size is set correctly or if it
+        # should be the number of graphs in the batch
         self.log('val_loss',
                  val_loss,
                  on_epoch=True,
-                 batch_size=batch.num_nodes)
+                 batch_size=batch.num_nodes,
+                 prog_bar=True)
         return {'val_loss': val_loss}
 
     def compute_loss(self, batch: Batch) -> torch.Tensor:
