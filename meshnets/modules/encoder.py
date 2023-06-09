@@ -1,8 +1,9 @@
 """"Define the GraphEncoder class."""
 
 import torch
-from torch.nn import Identity
 from torch_geometric.data import Batch
+
+from meshnets.modules.mlp import MLP
 
 
 class GraphEncoder(torch.nn.Module):
@@ -18,11 +19,13 @@ class GraphEncoder(torch.nn.Module):
         given the features sizes, latent size and number of MLP layers."""
         super().__init__()
 
-        # TODO(victor) : implement encoders
-        self.node_encoder = Identity(node_feats_size, latent_size,
-                                     num_mlp_layers)
-        self.edge_encoder = Identity(mesh_feats_size, latent_size,
-                                     num_mlp_layers)
+        node_encoder_widths = [node_feats_size
+                              ] + (num_mlp_layers + 1) * [latent_size]
+        self.node_encoder = MLP(node_encoder_widths, layer_norm=True)
+
+        edge_encoder_widths = [mesh_feats_size
+                              ] + (num_mlp_layers + 1) * [latent_size]
+        self.edge_encoder = MLP(edge_encoder_widths, layer_norm=True)
 
     def forward(self, graph: Batch) -> Batch:
         """Encode the node and mesh features of a batch of graphs
