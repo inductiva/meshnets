@@ -29,12 +29,12 @@ class MLP(torch.nn.Module):
                   activate_final: bool):
         "Construct the MLP with ReLU activation."
 
-        nb_layers = len(widths)
+        num_layers = len(widths)
 
         layers = []
-        for i in range(nb_layers - 1):
+        for i in range(num_layers - 1):
             layers.append(Linear(widths[i], widths[i + 1]))
-            if i < (nb_layers - 2) or activate_final:
+            if i < (num_layers - 2) or activate_final:
                 layers.append(ReLU())
 
         if layer_norm:
