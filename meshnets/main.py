@@ -53,7 +53,7 @@ def main(_):
 
     sample = dataset.get(0)
     model = MeshGraphNet(node_features_size=sample.x.shape[1],
-                         mesh_features_size=sample.edge_attr.shape[1],
+                         edge_features_size=sample.edge_attr.shape[1],
                          output_size=sample.y.shape[1],
                          latent_size=sample.x.shape[1],
                          num_mlp_layers=1,
