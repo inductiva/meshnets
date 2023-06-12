@@ -17,13 +17,13 @@ class MeshGraphNet(torch.nn.Module):
     are then applied by the Processor on the latent graphs and the Decoder
     outputs features at each node from the processed latent node features."""
 
-    def __init__(self, node_features_size, mesh_features_size, output_size,
+    def __init__(self, node_features_size, edge_features_size, output_size,
                  latent_size, num_mlp_layers, message_passing_steps):
         """Initialize the GraphEncoder, GraphProcessor and GraphDecoder
         of the MeshGraphNet."""
         super().__init__()
 
-        self.encoder = GraphEncoder(node_features_size, mesh_features_size,
+        self.encoder = GraphEncoder(node_features_size, edge_features_size,
                                     latent_size, num_mlp_layers)
 
         self.processor = MGNProcessor(latent_size, message_passing_steps)
