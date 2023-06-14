@@ -14,7 +14,7 @@ from torch_geometric.loader import DataLoader
 
 from meshnets.modules.model import MeshGraphNet
 from meshnets.utils import data_processing
-from meshnets.utils.datasets import FromDiskDataset
+from meshnets.utils.datasets import FromDiskGeometricDataset
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('mesh_data_dir', os.path.join('data', 'vtk'),
@@ -40,7 +40,7 @@ def main(_):
                                                   get_pressure=True,
                                                   verbose=False)
 
-    dataset = FromDiskDataset(FLAGS.processed_data_dir)
+    dataset = FromDiskGeometricDataset(FLAGS.processed_data_dir)
     train_dataset, test_dataset = random_split(dataset, [0.8, 0.2])
 
     # If label 'y' is absent (e.g. for inference), use `exclude_keys=['y']`
