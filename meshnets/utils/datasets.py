@@ -53,7 +53,7 @@ class FromDiskDataset(torch.utils.data.Dataset):
         return torch.load(data_path)
 
 
-class FromDiskGeoDataset(Dataset):
+class FromDiskGeometricDataset(Dataset):
     """Reads a torch_geometric dataset from a given directory.
     
     This class inherits from torch_geometric Dataset and implements its
@@ -68,19 +68,19 @@ class FromDiskGeoDataset(Dataset):
 
     def __init__(self, data_dir, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dataset = FromDiskDataset(data_dir=data_dir)
+        self.from_disk_dataset = FromDiskDataset(data_dir=data_dir)
 
     def len(self) -> int:
         """Returns the number of graphs stored in the dataset.
         
         This is the number of files in the dataset from disk."""
-        return len(self.dataset)
+        return len(self.from_disk_dataset)
 
     def get(self, idx: int) -> Data:
         """Gets the data object at index :obj:`idx`.
         
         This is the data object at index :obj:`idx` in the dataset from disk."""
-        return self.dataset[idx]
+        return self.from_disk_dataset[idx]
 
     @property
     def num_label_features(self) -> int:
