@@ -12,9 +12,19 @@ from meshnets.utils.datasets import FromDiskGeometricDataset
 
 FLAGS = flags.FLAGS
 
+# Random seed flag
+flags.DEFINE_integer('random_seed', 21,
+                     'The seed to initialize the random number generator.')
+
 # Processed data path
 flags.DEFINE_string('processed_data_dir', os.path.join('data', 'pt'),
                     'Path to the folder for the processed data files.')
+
+# Dataset splits path
+flags.DEFINE_float('train_split', 0.8,
+                   'The fraction of the dataset used for traing.')
+flags.DEFINE_float('validation_split', 0.2,
+                   'The fraction of the dataset used for validation.')
 
 # Dataloaders flags
 flags.DEFINE_integer('batch_size', 3, 'The batch size.')
@@ -52,10 +62,13 @@ flags.DEFINE_integer('log_every_n_steps', 1, 'How often to log within steps.')
 
 def main(_):
 
-    torch.manual_seed(21)
+    random_seed = FLAGS.random_seed
+    if random_seed is not None:
+        torch.manual_seed(random_seed)
 
     dataset = FromDiskGeometricDataset(FLAGS.processed_data_dir)
-    train_dataset, validation_dataset = random_split(dataset, [0.8, 0.2])
+    train_dataset, validation_dataset = random_split(
+        dataset, [FLAGS.train_split, FLAGS.validation_split])
 
     config = {
         'batch_size': FLAGS.batch_size,
