@@ -4,13 +4,15 @@ import os
 
 from absl import app
 from absl import flags
+import ray
+from ray import tune
 import torch
 from torch.utils.data import random_split
 
 from meshnets.utils import model_training
 from meshnets.utils.datasets import FromDiskGeometricDataset
 
-TUNING_RUN = False
+TUNING_RUN = True
 FLAGS = flags.FLAGS
 
 # Random seed flag
@@ -28,23 +30,23 @@ flags.DEFINE_float('validation_split', 0.2,
                    'The fraction of the dataset used for validation.')
 
 # Dataloaders flags
-flags.DEFINE_integer('batch_size', 3, 'The batch size.')
+flags.DEFINE_multi_integer('batch_size', [1, 2, 4], 'The batch size.')
 flags.DEFINE_integer('num_workers_loader', 2,
                      'The number of workers for the data loaders.')
 
 # Model parameters flags
-flags.DEFINE_integer('latent_size', 8,
-                     'The size of the latent features in the model.')
-flags.DEFINE_integer('num_mlp_layers', 2,
-                     'The number of hidden layers in the MLPs.')
-flags.DEFINE_integer('message_passing_steps', 5,
-                     'The number of message passing steps in the processor.')
+flags.DEFINE_list('latent_size', [8, 16, 32],
+                  'The size of the latent features in the model.')
+flags.DEFINE_list('num_mlp_layers', [1, 2],
+                  'The number of hidden layers in the MLPs.')
+flags.DEFINE_list('message_passing_steps', [3, 5, 8],
+                  'The number of message passing steps in the processor.')
 
 # Lightning wrapper flags
-flags.DEFINE_float('learning_rate', 1e-3, 'The training learning rate.')
+flags.DEFINE_list('learning_rate', [1e-3, 1e-4], 'The training learning rate.')
 
 # Logger flags
-flags.DEFINE_string('experiment_name', 'MGN-training',
+flags.DEFINE_string('experiment_name', 'MGN-tuning',
                     'The MLFlow experiment name.')
 
 # Checkpoint flags
@@ -71,27 +73,49 @@ def main(_):
     train_dataset, validation_dataset = random_split(
         dataset, [FLAGS.train_split, FLAGS.validation_split])
 
+    # Define the search space over which `tune` will run.
     config = {
-        'batch_size': FLAGS.batch_size,
-        'latent_size': FLAGS.latent_size,
-        'num_mlp_layers': FLAGS.num_mlp_layers,
-        'message_passing_steps': FLAGS.message_passing_steps,
-        'learning_rate': FLAGS.learning_rate
+        'batch_size':
+            tune.grid_search(list(map(int, FLAGS.batch_size))),
+        'latent_size':
+            tune.grid_search(list(map(int, FLAGS.latent_size))),
+        'num_mlp_layers':
+            tune.grid_search(list(map(int, FLAGS.num_mlp_layers))),
+        'message_passing_steps':
+            tune.grid_search(list(map(int, FLAGS.message_passing_steps))),
+        'learning_rate':
+            tune.grid_search(list(map(int, FLAGS.learning_rate)))
     }
+
     experiment_config = {
         'experiment_name': FLAGS.experiment_name,
         'num_workers_loader': FLAGS.num_workers_loader,
         'tuning_run': TUNING_RUN,
-        'num_workers_ray': FLAGS.num_workers_ray,
-        'num_cpus_per_worker': FLAGS.num_cpus_per_worker,
+        # The two following parameters are unused in tuning regime
+        'num_workers_ray': None,
+        'num_cpus_per_worker': None,
         'use_gpu': FLAGS.use_gpu,
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
     }
 
-    model_training.train_model(config, experiment_config, train_dataset,
-                               validation_dataset)
+    # Alocate resources per trial.
+    resources_per_trial = {
+        'cpu': FLAGS.num_cpus_per_worker,
+        'gpu': 1 if FLAGS.use_gpu else 0
+    }
+
+    trainable = tune.with_parameters(model_training.train_model,
+                                     experiment_config=experiment_config,
+                                     train_dataset=train_dataset,
+                                     validation_dataset=validation_dataset)
+
+    ray.init()
+    tune.run(trainable,
+             config=config,
+             num_samples=1,
+             resources_per_trial=resources_per_trial)
 
 
 if __name__ == '__main__':
