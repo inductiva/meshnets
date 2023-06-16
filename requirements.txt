@@ -2,3 +2,6 @@ absl-py
 pyvista
 torch
 torch_geometric
+git+https://github.com/ray-project/ray_lightning#ray_lightning
+ray[default]
+mlflow
