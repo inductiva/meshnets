@@ -1,0 +1,6 @@
+# Specify the conda environment config file that will be used
+# to install the virtual environment where the jobs will run in the cluster workers
+conda: meshnets/runtime-conda.yml
+
+env_vars:
+  MLFLOW_TRACKING_URI: http://100.86.132.106

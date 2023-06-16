@@ -1,0 +1,12 @@
+name: meshnets-env # conda environment where the jobs will run in the cluster workers
+channels:
+  - conda-forge
+
+dependencies:
+  - pip:
+    - absl-py
+    - torch
+    - torch_geometric
+    - pytorch_lightning
+    - ray_lightning
+    - mlflow
