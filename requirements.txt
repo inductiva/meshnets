@@ -1,7 +1,9 @@
 absl-py
 pyvista
-torch
+torch==2.0.1
+torch-scatter -f https://data.pyg.org/whl/torch-2.0.1+cpu.html
 torch_geometric
+pytorch_lightning==1.6.*
 git+https://github.com/ray-project/ray_lightning#ray_lightning
 ray[default]
 mlflow
