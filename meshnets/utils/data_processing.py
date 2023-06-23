@@ -1,7 +1,5 @@
 """Process and format the mesh data for our model"""
 
-import os
-from pathlib import Path
 from typing import Optional
 from typing import Tuple
 
@@ -140,28 +138,3 @@ def mesh_file_to_graph_data(file_path: str,
             logging.info('Pressure label shape : %s', graph.y.shape)
 
     return graph
-
-
-def mesh_files_to_graph_files(mesh_data_dir: str,
-                              processed_data_dir: str,
-                              wind_vector: Tuple[float],
-                              get_pressure: bool = True,
-                              verbose: bool = False) -> None:
-    """Loop through a directory containing mesh files, produce a
-    graph representation of each mesh and save the graph as
-    a `.pt` file in the processed data directory."""
-
-    for mesh_file in os.listdir(mesh_data_dir):
-
-        mesh_file_path = os.path.join(mesh_data_dir, mesh_file)
-        processed_graph = mesh_file_to_graph_data(mesh_file_path,
-                                                  wind_vector,
-                                                  get_pressure=get_pressure,
-                                                  verbose=verbose)
-
-        processed_file = Path(mesh_file).with_suffix('.pt')
-        processed_file_path = os.path.join(processed_data_dir, processed_file)
-
-        if verbose:
-            logging.info('Saving graph object to : %s', processed_file_path)
-        torch.save(processed_graph, processed_file_path)
