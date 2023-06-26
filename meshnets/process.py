@@ -26,7 +26,7 @@ flags.DEFINE_string('processed_data_dir', os.path.join('data', 'pt'),
                     'Path to the folder for the processed data files.')
 
 flags.DEFINE_bool('get_pressure', True,
-                  'Wether or not to extract pressure from the mesh files.')
+                  'Whether or not to extract pressure from the mesh files.')
 
 flags.DEFINE_bool(
     'verbose', False,
@@ -34,8 +34,10 @@ flags.DEFINE_bool(
 
 
 def main(_):
-    """Loop through a directory containing mesh files, produce a
-    graph representation of each mesh and save the graph as
+    """Process mesh data files to encoded graph data files.
+    
+    Loop through a directory containing mesh files (e.g. `.vtk`),
+    produce a graph representation of each mesh and save the graph as
     a `.pt` file in the processed data directory."""
 
     mesh_data_dir = FLAGS.mesh_data_dir
