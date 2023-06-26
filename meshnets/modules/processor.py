@@ -13,15 +13,14 @@ class MGNProcessorLayer(MessagePassing):
     """Single MGN Message Passing layer for graphs."""
 
     def __init__(self, latent_size, num_mlp_layers):
-        """Initialize a processor layer given the latent size
-        and number of layers in the MLPs.
+        """Build the MLP encoders for message passing.
 
         Note that the latent node features and latent edge features
         have the same size. Thus, the input of the edge processor is
         three times the hidden dimension (one self embedding and two
         adjacent node embeddings). The input of the node processor is
-        two times the hidden dimension (one self embedding and one sum
-        of connected edges embedings)
+        two times the hidden dimension (one self embeding and one 
+        aggregation of connected edges embedings)
         """
         super().__init__()
 
@@ -35,10 +34,9 @@ class MGNProcessorLayer(MessagePassing):
 
     def forward(self, graph: Batch) -> Batch:
         """
-        Call the propagate method to initiate message passing and aggregation
-        on edges, and then compute the updated node features.
+        Propagate information on edges, then compute updated node features.
         
-        It returns the graph with updated edge and node features."""
+        Returns the graph with updated edge and node features."""
 
         aggregated_edges, updated_edges = self.propagate(
             edge_index=graph.edge_index, x=graph.x, edge_attr=graph.edge_attr)
@@ -79,8 +77,7 @@ class MGNProcessor(torch.nn.Module):
     the latent node and mesh features."""
 
     def __init__(self, latent_size, num_mlp_layers, message_passing_steps):
-        """Initialize the processor given the latent size, number of layers
-        in the MLPs and number of message passing steps."""
+        """Initialize the processor."""
         super().__init__()
 
         self._latent_size = latent_size
