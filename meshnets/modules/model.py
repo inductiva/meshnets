@@ -26,7 +26,8 @@ class MeshGraphNet(torch.nn.Module):
         self.encoder = GraphEncoder(node_features_size, edge_features_size,
                                     latent_size, num_mlp_layers)
 
-        self.processor = MGNProcessor(latent_size, message_passing_steps)
+        self.processor = MGNProcessor(latent_size, num_mlp_layers,
+                                      message_passing_steps)
 
         self.decoder = GraphDecoder(output_size, latent_size, num_mlp_layers)
 
