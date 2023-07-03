@@ -5,7 +5,6 @@ or be used for tuning using Ray."""
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers.mlflow import MLFlowLogger
 from torch_geometric.loader import DataLoader
 
 import ray
@@ -14,6 +13,7 @@ from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
 from meshnets.modules.lightning_wrapper import MGNLightningWrapper
 from meshnets.modules.model import MeshGraphNet
+from meshnets.utils.mlf_callbacks import MLFlowLoggerFinalizeCheckpointer
 
 
 def train_model(config, experiment_config, train_dataset, validation_dataset):
@@ -84,15 +84,16 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     lightning_wrapper = MGNLightningWrapper(model, learning_rate=learning_rate)
 
     # The logger creates a new MLFlow run automatically
-    mlf_logger = MLFlowLogger(experiment_name=experiment_name)
+    # Checkpoints are logged as artifacts at the end of training
+    mlf_logger = MLFlowLoggerFinalizeCheckpointer(
+        experiment_name=experiment_name)
     # Log the config parameters for the run to MLFlow
     mlf_logger.log_hyperparams(config)
 
     # Define the list of callbacks
     callbacks = []
 
-    # TODO(victor): This saves checkpoints locally in the mlflow folder
-    # but will not log them as artifacts on the mlflow server
+    # Save checkpoints locally in the mlflow folder
     checkpoint_callback = ModelCheckpoint(monitor='val_loss',
                                           save_top_k=save_top_k)
     callbacks.append(checkpoint_callback)
