@@ -106,7 +106,7 @@ def triangle_mesh_to_graph(node_coordinates: np.ndarray,
 
 def mesh_file_to_graph_data(file_path: str,
                             wind_vector: Tuple[float],
-                            get_pressure: bool = True,
+                            load_pressure: bool = True,
                             verbose: bool = False) -> Data:
     """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
     a wind vector.
@@ -121,7 +121,7 @@ def mesh_file_to_graph_data(file_path: str,
     if verbose:
         logging.info('Loading mesh data from %s', file_path)
     nodes, edges, pressure = data_loading.load_edge_mesh_pv(
-        file_path, get_pressure=get_pressure, verbose=verbose)
+        file_path, load_pressure=load_pressure, verbose=verbose)
 
     # node features for each node are the wind vector
     node_features = np.tile(wind_vector, (len(nodes), 1))

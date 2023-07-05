@@ -12,14 +12,13 @@ import pyvista as pv
 
 def load_edge_mesh_pv(
     obj_path: str,
-    get_pressure: bool = True,
+    load_pressure: bool = True,
     verbose: bool = False
-) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray,
-                                                            np.ndarray]]:
+) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
     """Extract node coordinates, edges and pressure at nodes from a mesh file
     using pyvista.
     
-    If `get_pressure=False`, the returned pressure will be None."""
+    If `load_pressure=False`, the returned pressure will be None."""
 
     mesh = pv.read(obj_path)
 
@@ -41,7 +40,7 @@ def load_edge_mesh_pv(
         logging.info('Nodes shape : %s', nodes.shape)
         logging.info('Edge list shape : %s', edge_list.shape)
 
-    if get_pressure:
+    if load_pressure:
         # Reshape from (number_of_points,) to (number_of_points, 1)
         # to be consistent with cases of multiple node features
         # TODO(victor): decide if array reshape is necessary
@@ -83,14 +82,13 @@ def edges_from_meshio_mesh(mesh: Mesh) -> np.ndarray:
 
 def load_edge_mesh_meshio(
     obj_path: str,
-    get_pressure: bool = True,
+    load_pressure: bool = True,
     verbose: bool = False
-) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], Tuple[np.ndarray,
-                                                            np.ndarray]]:
+) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
     """Extract node coordinates, edges and pressure at nodes from a mesh file
     using meshio.
     
-    If `get_pressure=False`, the returned pressure will be None.
+    If `load_pressure=False`, the returned pressure will be None.
 
     Edges can include duplicates. 
     """
@@ -111,7 +109,7 @@ def load_edge_mesh_meshio(
         logging.info('Nodes shape : %s', nodes.shape)
         logging.info('Edge list shape : %s', edges.shape)
 
-    if get_pressure:
+    if load_pressure:
         # Same behavior as mesh.points
         pressure = mesh.point_data['p']
         if pressure.dtype.byteorder == '>':
