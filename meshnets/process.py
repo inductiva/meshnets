@@ -25,7 +25,7 @@ flags.DEFINE_string('mesh_data_dir', os.path.join('data', 'vtk'),
 flags.DEFINE_string('processed_data_dir', os.path.join('data', 'pt'),
                     'Path to the folder for the processed data files.')
 
-flags.DEFINE_bool('get_pressure', True,
+flags.DEFINE_bool('load_pressure', True,
                   'Whether or not to extract pressure from the mesh files.')
 
 flags.DEFINE_bool(
@@ -42,7 +42,7 @@ def main(_):
 
     mesh_data_dir = FLAGS.mesh_data_dir
     processed_data_dir = FLAGS.processed_data_dir
-    get_pressure = FLAGS.get_pressure
+    load_pressure = FLAGS.load_pressure
     verbose = FLAGS.verbose
 
     if not os.path.exists(processed_data_dir):
@@ -54,7 +54,7 @@ def main(_):
         processed_graph = data_processing.mesh_file_to_graph_data(
             mesh_file_path,
             WIND_VECTOR,
-            get_pressure=get_pressure,
+            load_pressure=load_pressure,
             verbose=verbose)
 
         processed_file = Path(mesh_file).with_suffix('.pt')
