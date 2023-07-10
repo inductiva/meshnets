@@ -1,86 +1,113 @@
 """File containing dataset classes."""
 import os
+import glob
+from pathlib import Path
 
 import numpy as np
 import torch
 from torch_geometric.data import Data, Dataset
 
+from meshnets.utils import data_processing
 
-class FromDiskDataset(torch.utils.data.Dataset):
-    """Reads a dataset from a given directory.
-
-    The examples are stored in `data_dir` as .pt files. The .pt
-    extension is what is commonly used to save pytorch objects such as
-    tensors, graphs, models, etc. To save an pytorch object we can use
-    ``torch.save(obj, 'path.pt')``. And then, to load it back into
-    memory we can use ``torch.load('path.pt')``.
-
-    A possible directory could look like this:
-
-    data_dir/
-        training_example_0.pt
-        training_example_1.pt
-        training_example_0.pt
-        training_example_1.pt
-
-    Note that the files do not have to be named like this.
-
-    """
-
-    def __init__(self, data_dir):
-        super().__init__()
-        self.root_dir = data_dir
-        self.files = sorted(os.listdir(data_dir))
-
-    def __len__(self):
-        return len(self.files)
-
-    def __getitem__(self, idx):
-        """The get is simply a method to retrieve an element from the
-        dataset. The only thing that exists in RAM at this point are
-        the paths to the examples. Later, this Dataset class is
-        wrapped by pytorch DataLoaders. These dataloaders will be
-        responsible for batching the data and feeding the batches to
-        the model.
-
-        Example:
-            >>> dataset = FromDiskDataset('data_dir')
-            >>> dataloader = DataLoader(dataset, batch_size=32)
-            >>> for batch in dataloader:
-            >>>     x, y = batch, batch.y
-        """
-        data_path = os.path.join(self.root_dir, self.files[idx])
-        return torch.load(data_path)
+# TODO(victor): the wind vector should be
+# obtained individually for each mesh
+WIND_VECTOR = (10, 0, 0)
 
 
 class FromDiskGeometricDataset(Dataset):
     """Reads a torch_geometric dataset from a given directory.
     
+    The data is loaded from disk each time it as accessed to reduce
+    RAM requirements. The data directory is assumed to be structured
+    as follow:
+
+    data/
+        sample_1/
+            mesh.vtk
+            graph.pt
+        sample_2/
+            mesh.vtk
+            graph.pt
+        sample_3/
+            mesh.vtk
+            graph.pt
+
+    Note that the directory, file names, and file extensions can be different.
+    `process_data` allows to produce the graph files upon instanciating the 
+    dataset class from a folder containing only the mesh files.
+
     This class inherits from torch_geometric Dataset and implements its
-    abstract methods `len` and `get` from the FromDiskDataset class.
-    This offers acces to the torch_geometric Dataset attributes when the .pt
-    files retrieved from disk are torch_geometric Data.
+    abstract methods `len` and `get`. This offers acces to the torch_geometric
+    Dataset attributes when the .pt files retrieved from disk are
+    torch_geometric Data.
 
     It also offer a new property called 'num_label_features' following
     the implementation of 'num_node_features' and 'num_edge_features'
     in torch_geometric Dataset.
     """
 
-    def __init__(self, data_dir, *args, **kwargs):
+    def __init__(self,
+                 data_dir: str,
+                 *args,
+                 process_data: bool = False,
+                 mesh_file_ext: str = '.vtk',
+                 graph_file_ext: str = '.pt',
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.from_disk_dataset = FromDiskDataset(data_dir=data_dir)
+
+        self.root_dir = data_dir
+        self.samples = sorted(os.listdir(data_dir))
+
+        self.mesh_file_ext = mesh_file_ext
+        self.graph_file_ext = graph_file_ext
+
+        if process_data:
+            self.process_data()
+
+    def process_data(self) -> None:
+        """Process the mesh files in the data directory to their graph
+        representation. Save the graph file in the same sample directory."""
+        for i in range(self.len()):
+            mesh_file_path = self.get_mesh_path(i)
+
+            processed_graph = data_processing.mesh_file_to_graph_data(
+                mesh_file_path, WIND_VECTOR, load_pressure=True)
+
+            processed_file_path = Path(mesh_file_path).with_suffix(
+                self.graph_file_ext)
+
+            torch.save(processed_graph, processed_file_path)
 
     def len(self) -> int:
-        """Returns the number of graphs stored in the dataset.
-        
-        This is the number of files in the dataset from disk."""
-        return len(self.from_disk_dataset)
+        """Return the number of samples in the dataset."""
+        return len(self.samples)
+
+    def get_sample_path(self, idx: int) -> str:
+        """Get the path to the sample directory at the given index."""
+        return os.path.join(self.root_dir, self.samples[idx])
+
+    def get_mesh_path(self, idx: int) -> str:
+        """Get the path to the mesh file at the given index."""
+        sample_path = self.get_sample_path(idx)
+        mesh_path = glob.glob(
+            os.path.join(sample_path, f'*{self.mesh_file_ext}'))[0]
+        return mesh_path
+
+    def get_graph_path(self, idx: int) -> str:
+        """Get the path to the graph file at the given index."""
+        sample_path = self.get_sample_path(idx)
+        graph_path = glob.glob(
+            os.path.join(sample_path, f'*{self.graph_file_ext}'))[0]
+        return graph_path
 
     def get(self, idx: int) -> Data:
-        """Gets the data object at index :obj:`idx`.
+        """Get an element from the dataset at the given index.
         
-        This is the data object at index :obj:`idx` in the dataset from disk."""
-        return self.from_disk_dataset[idx]
+        The only things that exist in RAM at this point are the paths 
+        to the samples. This method loads and returns the sample from disk."""
+
+        graph_path = self.get_graph_path(idx)
+        return torch.load(graph_path)
 
     @property
     def num_label_features(self) -> int:
