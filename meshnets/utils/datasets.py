@@ -17,7 +17,7 @@ WIND_VECTOR = (10, 0, 0)
 class FromDiskGeometricDataset(Dataset):
     """Reads a torch_geometric dataset from a given directory.
     
-    The data is loaded from disk each time it as accessed to reduce
+    The data is loaded from disk each time it is accessed to reduce
     RAM requirements. The data directory is assumed to be structured
     as follow:
 
@@ -33,7 +33,7 @@ class FromDiskGeometricDataset(Dataset):
             graph.pt
 
     Note that the directory, file names, and file extensions can be different.
-    `process_data` allows to produce the graph files upon instanciating the 
+    `process_data` allows to produce the graph files upon instantiating the 
     dataset class from a folder containing only the mesh files.
 
     This class inherits from torch_geometric Dataset and implements its
@@ -49,24 +49,26 @@ class FromDiskGeometricDataset(Dataset):
     def __init__(self,
                  data_dir: str,
                  *args,
-                 process_data: bool = False,
                  mesh_file_ext: str = '.vtk',
                  graph_file_ext: str = '.pt',
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.root_dir = data_dir
-        self.samples = sorted(os.listdir(data_dir))
+        samples = [
+            sample for sample in os.listdir(data_dir)
+            if os.path.isdir(os.path.join(self.root_dir, sample))
+        ]
+        self.samples = sorted(samples)
 
         self.mesh_file_ext = mesh_file_ext
         self.graph_file_ext = graph_file_ext
 
-        if process_data:
-            self.process_data()
-
-    def process_data(self) -> None:
-        """Process the mesh files in the data directory to their graph
-        representation. Save the graph file in the same sample directory."""
+    def convert_mesh_to_graph_data(self) -> None:
+        """Create graph files from the mesh files in the data directory.
+        
+        This method saves each graph file in the same sample directory as
+        its corresponding mesh file. The same file name is used."""
         for i in range(self.len()):
             mesh_file_path = self.get_mesh_path(i)
 
