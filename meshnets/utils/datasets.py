@@ -37,7 +37,7 @@ class FromDiskGeometricDataset(Dataset):
     dataset class from a folder containing only the mesh files.
 
     This class inherits from torch_geometric Dataset and implements its
-    abstract methods `len` and `get`. This offers acces to the torch_geometric
+    abstract methods `len` and `get`. This offers access to the torch_geometric
     Dataset attributes when the .pt files retrieved from disk are
     torch_geometric Data.
 
