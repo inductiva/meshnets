@@ -69,7 +69,7 @@ class FromDiskGeometricDataset(Dataset):
         This method saves each graph file in the same sample directory as
         its corresponding mesh file. The same file name is used."""
 
-        for i in range(self.len()):
+        for i in self.indices():
             mesh_file_path = self.get_mesh_path(i)
 
             processed_graph = data_processing.mesh_file_to_graph_data(
