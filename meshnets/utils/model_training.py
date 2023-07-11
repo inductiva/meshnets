@@ -60,6 +60,9 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     # Checkpoint config
     save_top_k = experiment_config['save_top_k']
 
+    # Compute the training dataset stats for normalization
+    train_stats = train_dataset.dataset[train_dataset.indices].get_stats()
+
     # Load the datasets
     train_loader = DataLoader(train_dataset,
                               batch_size=batch_size,
@@ -81,14 +84,17 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         num_mlp_layers=num_mlp_layers,
         message_passing_steps=message_passing_steps)
 
-    lightning_wrapper = MGNLightningWrapper(model, learning_rate=learning_rate)
+    lightning_wrapper = MGNLightningWrapper(model,
+                                            data_stats=train_stats,
+                                            learning_rate=learning_rate)
 
     # The logger creates a new MLFlow run automatically
     # Checkpoints are logged as artifacts at the end of training
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
-    # Log the config parameters for the run to MLFlow
+    # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams(config)
+    mlf_logger.log_hyperparams(train_stats)
 
     # Define the list of callbacks
     callbacks = []

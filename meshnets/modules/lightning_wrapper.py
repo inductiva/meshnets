@@ -8,12 +8,39 @@ import pytorch_lightning as pl
 class MGNLightningWrapper(pl.LightningModule):
     """Simple pytorch_lightning wrapper for the MeshGraphNet training logic."""
 
-    def __init__(self, model: torch.nn.Module, learning_rate: float = 1e-3):
+    def __init__(self,
+                 model: torch.nn.Module,
+                 data_stats: dict,
+                 learning_rate: float = 1e-3):
         super().__init__()
         self.model = model
+        self.data_stats = data_stats
         self.learning_rate = learning_rate
 
+    def normalize(self, batch: Batch) -> Batch:
+
+        # Normalize the input features
+        batch.x = (batch.x -
+                   self.data_stats['x_mean']) / self.data_stats['x_std']
+
+        batch.edge_attr = (batch.edge_attr - self.data_stats['edge_attr_mean']
+                          ) / self.data_stats['edge_attr_std']
+
+        # Normalize the labels
+        if batch.y is not None:
+            batch.y = (batch.y -
+                       self.data_stats['y_mean']) / self.data_stats['y_std']
+
+        return batch
+
+    def forward(self, batch: Batch) -> torch.Tensor:
+        batch = self.normalize(batch)
+        return self.model(batch)
+
     def training_step(self, batch: Batch, _) -> dict:
+
+        batch = self.normalize(batch)
+
         loss = self.compute_loss(batch)
         # batch_size can vary depending on the number of nodes in the graphs
         # so we pass it explicitly to the logger
@@ -23,6 +50,9 @@ class MGNLightningWrapper(pl.LightningModule):
         return {'loss': loss}
 
     def validation_step(self, batch: Batch, _) -> dict:
+
+        batch = self.normalize(batch)
+
         val_loss = self.compute_loss(batch)
         # batch_size can vary depending on the number of nodes in the graphs
         # so we pass it explicitly to the logger

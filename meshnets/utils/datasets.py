@@ -129,6 +129,65 @@ class FromDiskGeometricDataset(Dataset):
         graph_path = self.get_graph_path(idx)
         return torch.load(graph_path)
 
+    def get_stats(self):
+        """Compute and return the dataset statistics."""
+
+        sample = self[0]
+        eps = torch.tensor(1e-8)
+
+        x_mean = torch.zeros(sample.x.shape[1:])
+        x_std = torch.zeros(sample.x.shape[1:])
+        x_num = 0
+
+        edge_attr_mean = torch.zeros(sample.edge_attr.shape[1:])
+        edge_attr_std = torch.zeros(sample.edge_attr.shape[1:])
+        edge_attr_num = 0
+
+        y_mean = torch.zeros(sample.y.shape[1:])
+        y_std = torch.zeros(sample.y.shape[1:])
+        y_num = 0
+
+        # Iterate over the samples in the dataset to compute the means
+        for sample in self:
+
+            x_mean += torch.sum(sample.x, dim=0)
+            x_num += sample.x.shape[0]
+
+            edge_attr_mean += torch.sum(sample.edge_attr, dim=0)
+            edge_attr_num += sample.edge_attr.shape[0]
+
+            y_mean += torch.sum(sample.y, dim=0)
+            y_num += sample.y.shape[0]
+
+        x_mean = x_mean / x_num
+        edge_attr_mean = edge_attr_mean / edge_attr_num
+        y_mean = y_mean / y_num
+
+        # Iterate over the samples in the dataset to compute the STDs
+        for sample in self:
+            x_std += torch.sum((sample.x - x_mean)**2, dim=0)
+
+            edge_attr_std += torch.sum((sample.edge_attr - edge_attr_mean)**2,
+                                       dim=0)
+
+            y_std += torch.sum((sample.y - y_mean)**2, dim=0)
+
+        x_std = torch.maximum(torch.sqrt(x_std / x_num), eps)
+        edge_attr_std = torch.maximum(torch.sqrt(edge_attr_std / edge_attr_num),
+                                      eps)
+        y_std = torch.maximum(torch.sqrt(y_std / y_num), eps)
+
+        stats = {
+            'x_mean': x_mean,
+            'x_std': x_std,
+            'edge_attr_mean': edge_attr_mean,
+            'edge_attr_std': edge_attr_std,
+            'y_mean': y_mean,
+            'y_std': y_std
+        }
+
+        return stats
+
     @property
     def num_label_features(self) -> int:
         """Return the number of features per label in the dataset."""

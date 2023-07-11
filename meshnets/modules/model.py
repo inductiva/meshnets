@@ -35,8 +35,6 @@ class MeshGraphNet(torch.nn.Module):
         """Apply the MeshGraphNet to a batch of graphs
         and return the prediction tensor."""
 
-        # TODO(victor): normalize data
-
         latent_data = self.encoder(data)
         latent_data = self.processor(latent_data)
         prediction = self.decoder(latent_data)
