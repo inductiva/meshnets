@@ -1,7 +1,6 @@
 """File containing dataset classes."""
 import os
-import glob
-from pathlib import Path
+import warnings
 
 import numpy as np
 import torch
@@ -49,8 +48,8 @@ class FromDiskGeometricDataset(Dataset):
     def __init__(self,
                  data_dir: str,
                  *args,
-                 mesh_file_ext: str = '.vtk',
-                 graph_file_ext: str = '.pt',
+                 mesh_file_name: str = 'pressure_field.vtk',
+                 graph_file_name: str = 'pressure_field.pt',
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -61,24 +60,33 @@ class FromDiskGeometricDataset(Dataset):
         ]
         self.samples = sorted(samples)
 
-        self.mesh_file_ext = mesh_file_ext
-        self.graph_file_ext = graph_file_ext
+        self.mesh_file_name = mesh_file_name
+        self.graph_file_name = graph_file_name
 
     def convert_mesh_to_graph_data(self) -> None:
         """Create graph files from the mesh files in the data directory.
         
         This method saves each graph file in the same sample directory as
         its corresponding mesh file. The same file name is used."""
+
         for i in range(self.len()):
             mesh_file_path = self.get_mesh_path(i)
 
             processed_graph = data_processing.mesh_file_to_graph_data(
                 mesh_file_path, WIND_VECTOR, load_pressure=True)
 
-            processed_file_path = Path(mesh_file_path).with_suffix(
-                self.graph_file_ext)
+            processed_file_path = os.path.join(self.get_sample_path(i),
+                                               self.graph_file_name)
 
             torch.save(processed_graph, processed_file_path)
+
+    def remove_files(self, file_name_to_delete: str) -> None:
+        """Remove the required file in each sample directory."""
+
+        for i in range(self.len()):
+            file_path_to_delete = os.path.join(self.get_sample_path(i),
+                                               file_name_to_delete)
+            os.remove(file_path_to_delete)
 
     def len(self) -> int:
         """Return the number of samples in the dataset."""
@@ -90,16 +98,26 @@ class FromDiskGeometricDataset(Dataset):
 
     def get_mesh_path(self, idx: int) -> str:
         """Get the path to the mesh file at the given index."""
+
         sample_path = self.get_sample_path(idx)
-        mesh_path = glob.glob(
-            os.path.join(sample_path, f'*{self.mesh_file_ext}'))[0]
+        mesh_path = os.path.join(sample_path, self.mesh_file_name)
+
+        if not os.path.isfile(mesh_path):
+            #raise FileNotFoundError(mesh_path)
+            warnings.warn(f"File '{mesh_path}' does not exist.")
+
         return mesh_path
 
     def get_graph_path(self, idx: int) -> str:
         """Get the path to the graph file at the given index."""
+
         sample_path = self.get_sample_path(idx)
-        graph_path = glob.glob(
-            os.path.join(sample_path, f'*{self.graph_file_ext}'))[0]
+        graph_path = os.path.join(sample_path, self.graph_file_name)
+
+        if not os.path.isfile(graph_path):
+            #raise FileNotFoundError(graph_path)
+            warnings.warn(f"File '{graph_path}' does not exist.")
+
         return graph_path
 
     def get(self, idx: int) -> Data:
@@ -114,6 +132,7 @@ class FromDiskGeometricDataset(Dataset):
     @property
     def num_label_features(self) -> int:
         """Return the number of features per label in the dataset."""
+
         # Following torch_geometric.data.Dataset implementation
         data = self[0]
         # Do not fill cache for `InMemoryDataset`:
