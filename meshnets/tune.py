@@ -35,7 +35,7 @@ flags.DEFINE_integer('num_workers_loader', 2,
                      'The number of workers for the data loaders.')
 
 # Model parameters flags
-flags.DEFINE_list('latent_size', [8, 32, 64],
+flags.DEFINE_list('latent_size', [8, 16, 32, 64],
                   'The size of the latent features in the model.')
 flags.DEFINE_list('num_mlp_layers', [2, 3],
                   'The number of hidden layers in the MLPs.')
@@ -43,7 +43,8 @@ flags.DEFINE_list('message_passing_steps', [5, 10, 15],
                   'The number of message passing steps in the processor.')
 
 # Lightning wrapper flags
-flags.DEFINE_list('learning_rate', [1e-2, 1e-3, 1e-4], 'The training learning rate.')
+flags.DEFINE_list('learning_rate', [1e-2, 1e-3, 1e-4],
+                  'The training learning rate.')
 
 # Logger flags
 flags.DEFINE_string('experiment_name', 'MGN-tuning',
@@ -56,7 +57,9 @@ flags.DEFINE_integer('save_top_k', 3, 'The number of models to save.')
 flags.DEFINE_integer('num_workers_ray', 2, 'The number of workers.')
 flags.DEFINE_integer('num_cpus_per_worker', 12,
                      'The number of cpus for each worker.')
-flags.DEFINE_float('num_gpus_per_worker', 0.5, 'The number of gpus for each worker.')
+flags.DEFINE_float(
+    'num_gpus_per_worker', 0.5,
+    'The number of gpus for each worker. If set to zero, GPUs are not used.')
 
 # Trainer flags
 flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
