@@ -18,7 +18,7 @@ flags.DEFINE_integer('random_seed', 21,
                      'The seed to initialize the random number generator.')
 
 # Processed data path
-flags.DEFINE_string('processed_data_dir', os.path.join('data', 'pt'),
+flags.DEFINE_string('processed_data_dir', os.path.join('data', 'ml'),
                     'Path to the folder for the processed data files.')
 
 # Dataset splits path
