@@ -103,7 +103,6 @@ class FromDiskGeometricDataset(Dataset):
         mesh_path = os.path.join(sample_path, self.mesh_file_name)
 
         if not os.path.isfile(mesh_path):
-            #raise FileNotFoundError(mesh_path)
             warnings.warn(f"File '{mesh_path}' does not exist.")
 
         return mesh_path
@@ -115,7 +114,6 @@ class FromDiskGeometricDataset(Dataset):
         graph_path = os.path.join(sample_path, self.graph_file_name)
 
         if not os.path.isfile(graph_path):
-            #raise FileNotFoundError(graph_path)
             warnings.warn(f"File '{graph_path}' does not exist.")
 
         return graph_path
@@ -130,9 +128,21 @@ class FromDiskGeometricDataset(Dataset):
         return torch.load(graph_path)
 
     def get_stats(self):
-        """Compute and return the dataset statistics."""
+        """Compute and return the dataset statistics.
+        
+        It returns a dictionnary containing the following fields:
+            'x_mean'
+            'x_std'
+            'edge_attr_mean'
+            'eadge_attr_std'
+            'y_mean'
+            'y_std'
+        """
 
+        # Get the first dataset sample to initialize stat tensors with its shape
         sample = self[0]
+
+        # Small value to avoid zero variance
         eps = torch.tensor(1e-8)
 
         x_mean = torch.zeros(sample.x.shape[1:])
