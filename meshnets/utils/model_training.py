@@ -123,4 +123,4 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
 
     trainer.fit(lightning_wrapper, train_loader, validation_loader)
 
-    return lightning_wrapper
+    #return lightning_wrapper

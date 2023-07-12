@@ -51,13 +51,13 @@ flags.DEFINE_string('experiment_name', 'MGN-training',
 flags.DEFINE_integer('save_top_k', 3, 'The number of models to save.')
 
 # Strategy flags
-flags.DEFINE_integer('num_workers_ray', 2, 'The number of workers.')
-flags.DEFINE_integer('num_cpus_per_worker', 1,
+flags.DEFINE_integer('num_workers_ray', 1, 'The number of workers.')
+flags.DEFINE_integer('num_cpus_per_worker', 24,
                      'The number of cpus for each worker.')
-flags.DEFINE_bool('use_gpu', False, 'Whether to use gpu or not.')
+flags.DEFINE_bool('use_gpu', True, 'Whether to use gpu or not.')
 
 # Trainer flags
-flags.DEFINE_integer('max_epochs', 10, 'The number of epochs.')
+flags.DEFINE_integer('max_epochs', 200, 'The number of epochs.')
 flags.DEFINE_integer('log_every_n_steps', 1, 'How often to log within steps.')
 
 
