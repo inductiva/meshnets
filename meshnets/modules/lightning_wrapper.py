@@ -60,7 +60,7 @@ class MGNLightningWrapper(pl.LightningModule):
         return batch
 
     def forward(self, batch: Batch) -> torch.Tensor:
-        # Normalize the batch according to the given metrics before
+        """Normalize the batch before making a forward pass in the model."""
         batch = self.normalize_input(batch)
         return self.model(batch)
 
