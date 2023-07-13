@@ -13,7 +13,10 @@ from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
 from meshnets.modules.lightning_wrapper import MGNLightningWrapper
 from meshnets.modules.model import MeshGraphNet
-from meshnets.utils.mlf_callbacks import MLFlowLoggerFinalizeCheckpointer
+from meshnets.utils.callbacks import GeometricBatchSize
+from meshnets.utils.callbacks import GPUUsage
+from meshnets.utils.callbacks import GradientNorm
+from meshnets.utils.callbacks import MLFlowLoggerFinalizeCheckpointer
 
 
 def train_model(config, experiment_config, train_dataset, validation_dataset):
@@ -83,6 +86,7 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         latent_size=latent_size,
         num_mlp_layers=num_mlp_layers,
         message_passing_steps=message_passing_steps)
+    num_params = sum(p.numel() for p in model.parameters())
 
     lightning_wrapper = MGNLightningWrapper(model,
                                             data_stats=train_stats,
@@ -93,6 +97,7 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
     # Log the config parameters and training dataset stats for the run to MLFlow
+    mlf_logger.log_hyperparams({'num_params': num_params})
     mlf_logger.log_hyperparams(config)
     mlf_logger.log_hyperparams(train_stats)
 
@@ -103,6 +108,15 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     checkpoint_callback = ModelCheckpoint(monitor='val_loss',
                                           save_top_k=save_top_k)
     callbacks.append(checkpoint_callback)
+
+    gpu_callback = GPUUsage(log_freq=log_every_n_steps)
+    callbacks.append(gpu_callback)
+
+    gradient_callback = GradientNorm(log_freq=log_every_n_steps)
+    callbacks.append(gradient_callback)
+
+    batch_size_callback = GeometricBatchSize()
+    callbacks.append(batch_size_callback)
 
     # If this is not a tuning run we launch ray and define a ray strategy
     if not tuning_run:
