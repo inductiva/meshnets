@@ -49,7 +49,7 @@ class MLFlowLoggerFinalizeCheckpointer(MLFlowLogger):
 
 
 class GPUUsage(Callback):
-    """Tracks and logs GPU usage with the training logger."""
+    """Track and log GPU usage."""
 
     def __init__(self, log_freq=50):
         """
@@ -63,9 +63,9 @@ class GPUUsage(Callback):
         if (trainer.global_step +
                 1) % self.log_freq == 0 or trainer.is_last_batch:
             for gpu_uuid, gpu_usage in self.gpu_usage_history.items():
-                trainer.logger.log_metrics(f'gpu_memory_{gpu_uuid}_usage',
-                                           np.mean(gpu_usage),
-                                           step=trainer.global_step)
+                trainer.logger.log_metrics(
+                    {f'gpu_memory_{gpu_uuid}_usage': np.mean(gpu_usage)},
+                    step=trainer.global_step)
                 self.gpu_usage_history = {}
         self._update_gpu_usage()
 
@@ -84,7 +84,7 @@ class GPUUsage(Callback):
 
 
 class GradientNorm(Callback):
-    """Logs the full model gradient norm with the training logger."""
+    """Log full model gradient norm."""
 
     def __init__(self, log_freq=50):
         """
@@ -108,8 +108,7 @@ class GradientNorm(Callback):
 
 
 class GeometricBatchSize(Callback):
-    """Logs the number of nodes and edges in the current
-    torch geometric batch."""
+    """Log nodes and edges in the torch geometric batch."""
 
     def on_train_batch_start(self,
                              trainer,
