@@ -110,15 +110,24 @@ class GradientNorm(Callback):
 class GeometricBatchSize(Callback):
     """Log nodes and edges in the torch geometric batch."""
 
+    def __init__(self, log_freq=50):
+        """
+        Args:
+            log_freq: The frequency, in batches, at which to log GPU usage.
+        """
+        self.log_freq = log_freq
+
     def on_train_batch_start(self,
                              trainer,
                              pl_module,
                              batch: Batch,
                              batch_idx: int,
                              unused: int = 0) -> None:
-        trainer.logger.log_metrics(
-            {
-                'num_nodes': batch.num_nodes,
-                'num_edges': batch.num_edges
-            },
-            step=trainer.global_step)
+        if (trainer.global_step +
+                1) % self.log_freq == 0 or trainer.is_last_batch:
+            trainer.logger.log_metrics(
+                {
+                    'num_nodes': batch.num_nodes,
+                    'num_edges': batch.num_edges
+                },
+                step=trainer.global_step)
