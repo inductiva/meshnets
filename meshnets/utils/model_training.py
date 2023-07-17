@@ -115,7 +115,7 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     gradient_callback = GradientNorm(log_freq=log_every_n_steps)
     callbacks.append(gradient_callback)
 
-    batch_size_callback = GeometricBatchSize()
+    batch_size_callback = GeometricBatchSize(log_freq=log_every_n_steps)
     callbacks.append(batch_size_callback)
 
     # If this is not a tuning run we launch ray and define a ray strategy
