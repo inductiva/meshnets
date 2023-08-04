@@ -26,6 +26,8 @@ class MGNLightningWrapper(pl.LightningModule):
         """
         super().__init__()
 
+        self.save_hyperparameters()
+
         self.model = model
         self.data_stats = data_stats
         self.learning_rate = learning_rate
