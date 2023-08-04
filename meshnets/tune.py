@@ -72,7 +72,7 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
-    dataset = FromDiskGeometricDataset(FLAGS.processed_data_dir)
+    dataset = FromDiskGeometricDataset(FLAGS.data_dir)
     train_dataset, validation_dataset = random_split(
         dataset, [FLAGS.train_split, FLAGS.validation_split])
 
