@@ -10,7 +10,7 @@ from meshnets.utils.datasets import FromDiskGeometricDataset
 FLAGS = flags.FLAGS
 
 # Path flags
-flags.DEFINE_string('data_dir', os.path.join('data', 'dataset50'),
+flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder containing the mesh files.')
 
 
