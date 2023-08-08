@@ -36,8 +36,8 @@ def plot_mesh_with_scalars(mesh_path: str,
     mesh = mesh.rotate_z(rot_z)
 
     if scalars is None:
-        warnings.warn("Argument 'scalars' is None. Displaying with no values.")
-        mesh.set_active_scalars(None)
+        warnings.warn(
+            "Argument 'scalars' is None. Displaying with active scalar array.")
 
     mesh.plot(scalars=scalars,
               show_edges=True,
