@@ -48,8 +48,8 @@ def plot_mesh_with_scalars(mesh_path: str,
 
 
 def plot_mesh_comparison(mesh_path: str,
-                         scalars_1: np.array,
-                         scalars_2: np.array,
+                         ground_truth: np.array,
+                         prediction: np.array,
                          clim: Union[Tuple[float, float], None] = None,
                          rot_z: int = 0,
                          off_screen: bool = False,
@@ -65,7 +65,7 @@ def plot_mesh_comparison(mesh_path: str,
     plotter.subplot(0, 0)
     plotter.add_text('Ground Truth')
     plotter.add_mesh(mesh,
-                     scalars=scalars_1,
+                     scalars=ground_truth,
                      show_edges=True,
                      cmap='RdBu_r',
                      clim=clim,
@@ -75,14 +75,14 @@ def plot_mesh_comparison(mesh_path: str,
     plotter.subplot(0, 1)
     plotter.add_text('Prediction')
     plotter.add_mesh(mesh,
-                     scalars=scalars_2,
+                     scalars=prediction,
                      show_edges=True,
                      cmap='RdBu_r',
                      clim=clim,
                      copy_mesh=True)
 
     # Difference
-    difference = scalars_2 - scalars_1
+    difference = prediction - ground_truth
 
     plotter.subplot(0, 2)
     plotter.add_text('Error')
