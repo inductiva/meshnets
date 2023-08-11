@@ -49,7 +49,7 @@ class MLFlowLoggerFinalizeCheckpointer(MLFlowLogger):
 
 
 class GPUUsage(Callback):
-    """Track and log GPU usage."""
+    """Log GPU memory usage at logging step."""
 
     def __init__(self, log_freq=50):
         """
@@ -75,7 +75,7 @@ class GPUUsage(Callback):
 
 
 class GPUUsageMean(Callback):
-    """Track and log GPU usage."""
+    """Track and log average GPU memory usage between logging steps."""
 
     def __init__(self, log_freq=50):
         """
