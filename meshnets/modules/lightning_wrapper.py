@@ -1,18 +1,21 @@
 """Define lightning wrappers."""
 
+from typing import Type
+
 import torch
 from torch_geometric.data import Batch
 import pytorch_lightning as pl
 
 
 class MGNLightningWrapper(pl.LightningModule):
-    """Simple pytorch_lightning wrapper for the MeshGraphNet training logic."""
+    """Ppytorch_lightning wrapper for the MeshGraphNet training logic."""
 
     def __init__(self,
-                 model: torch.nn.Module,
+                 model: Type[torch.nn.Module],
                  data_stats: dict,
-                 learning_rate: float = 1e-3):
-        """Initialize for a given model, a dictionnary of
+                 learning_rate: float = 1e-3,
+                 **model_args):
+        """Initialize for a given model, its arguments, a dictionnary of
         data statistics for normalization, and a learning rate.
         
         The statistics dictionnary is expected to have
@@ -28,7 +31,7 @@ class MGNLightningWrapper(pl.LightningModule):
 
         self.save_hyperparameters()
 
-        self.model = model
+        self.model = model(**model_args)
         self.data_stats = data_stats
         self.learning_rate = learning_rate
 
@@ -68,15 +71,15 @@ class MGNLightningWrapper(pl.LightningModule):
 
     def training_step(self, batch: Batch, _) -> dict:
         loss = self.compute_loss(batch)
-        # batch_size can vary depending on the number of nodes in the graphs
-        # so we pass it explicitly to the logger
+        # batch_size is set to the number of nodes in the batch in order
+        # to weight the batch losses correctly
         self.log('loss', loss, on_epoch=True, batch_size=batch.num_nodes)
         return {'loss': loss}
 
     def validation_step(self, batch: Batch, _) -> dict:
         val_loss = self.compute_loss(batch)
-        # batch_size can vary depending on the number of nodes in the graphs
-        # so we pass it explicitly to the logger
+        # batch_size is set to the number of nodes in the batch in order
+        # to weight the batch losses correctly
         self.log('val_loss',
                  val_loss,
                  on_epoch=True,
@@ -85,7 +88,10 @@ class MGNLightningWrapper(pl.LightningModule):
         return {'val_loss': val_loss}
 
     def compute_loss(self, batch: Batch) -> torch.Tensor:
-        predictions = self.forward(batch)
+        # Normalize the batch before making a forward pass in the model
+        batch = self.normalize_input(batch)
+        predictions = self.model(batch)
+        # Normalize the labels before computing the loss
         batch = self.normalize_labels(batch)
         loss = torch.nn.functional.mse_loss(predictions, batch.y)
         return loss
