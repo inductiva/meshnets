@@ -78,19 +78,18 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
                                    persistent_workers=True,
                                    shuffle=False)
 
-    # Define the model
-    model = MeshGraphNet(
+    # Define the wrapper and the model
+    lightning_wrapper = MGNLightningWrapper(
+        MeshGraphNet,
         node_features_size=train_dataset.dataset.num_node_features,
         edge_features_size=train_dataset.dataset.num_edge_features,
         output_size=train_dataset.dataset.num_label_features,
         latent_size=latent_size,
         num_mlp_layers=num_mlp_layers,
-        message_passing_steps=message_passing_steps)
-    num_params = sum(p.numel() for p in model.parameters())
-
-    lightning_wrapper = MGNLightningWrapper(model,
-                                            data_stats=train_stats,
-                                            learning_rate=learning_rate)
+        message_passing_steps=message_passing_steps,
+        data_stats=train_stats,
+        learning_rate=learning_rate)
+    num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
 
     # The logger creates a new MLFlow run automatically
     # Checkpoints are logged as artifacts at the end of training
@@ -98,8 +97,6 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         experiment_name=experiment_name)
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({'num_params': num_params})
-    mlf_logger.log_hyperparams(config)
-    mlf_logger.log_hyperparams(train_stats)
 
     # Define the list of callbacks
     callbacks = []
