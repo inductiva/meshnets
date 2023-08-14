@@ -49,7 +49,33 @@ class MLFlowLoggerFinalizeCheckpointer(MLFlowLogger):
 
 
 class GPUUsage(Callback):
-    """Track and log GPU usage."""
+    """Log GPU memory usage at logging step."""
+
+    def __init__(self, log_freq=50):
+        """
+        Args:
+            log_freq: The frequency, in batches, at which to log GPU usage.
+        """
+        self.log_freq = log_freq
+        self.gpu_usage_history = {}
+
+    def on_batch_end(self, trainer, pl_module):
+        if (trainer.global_step +
+                1) % self.log_freq == 0 or trainer.is_last_batch:
+            try:
+                all_gpus = GPUtil.getGPUs()
+                for gpu in all_gpus:
+                    trainer.logger.log_metrics(
+                        {f'{gpu.uuid}_memory_usage': gpu.memoryUtil},
+                        step=trainer.global_step)
+            # pylint: disable=broad-except
+            except Exception as e:
+                warnings.warn('Something went wrong fetching GPU information.'\
+                              f'Failed with exception {e}')
+
+
+class GPUUsageMean(Callback):
+    """Track and log average GPU memory usage between logging steps."""
 
     def __init__(self, log_freq=50):
         """
@@ -64,7 +90,7 @@ class GPUUsage(Callback):
                 1) % self.log_freq == 0 or trainer.is_last_batch:
             for gpu_uuid, gpu_usage in self.gpu_usage_history.items():
                 trainer.logger.log_metrics(
-                    {f'gpu_memory_{gpu_uuid}_usage': np.mean(gpu_usage)},
+                    {f'{gpu_uuid}_mean_memory_usage': np.mean(gpu_usage)},
                     step=trainer.global_step)
                 self.gpu_usage_history = {}
         self._update_gpu_usage()
@@ -79,7 +105,7 @@ class GPUUsage(Callback):
                 self.gpu_usage_history[uuid].append(gpu.memoryUtil)
         # pylint: disable=broad-except
         except Exception as e:
-            warnings.warn('Something went wrong fetching GPU information.\n'\
+            warnings.warn('Something went wrong fetching GPU information.'\
                           f'Failed with exception {e}')
 
 
