@@ -66,7 +66,7 @@ class GPUUsage(Callback):
                 all_gpus = GPUtil.getGPUs()
                 for gpu in all_gpus:
                     trainer.logger.log_metrics(
-                        {f'{gpu.uuid}_memory_usage': gpu.memoryUtil},
+                        {f'gpu_memory_{gpu.uuid}_usage': gpu.memoryUtil},
                         step=trainer.global_step)
             # pylint: disable=broad-except
             except Exception as e:
@@ -90,7 +90,7 @@ class GPUUsageMean(Callback):
                 1) % self.log_freq == 0 or trainer.is_last_batch:
             for gpu_uuid, gpu_usage in self.gpu_usage_history.items():
                 trainer.logger.log_metrics(
-                    {f'{gpu_uuid}_mean_memory_usage': np.mean(gpu_usage)},
+                    {f'gpu_memory_{gpu_uuid}_mean_usage': np.mean(gpu_usage)},
                     step=trainer.global_step)
                 self.gpu_usage_history = {}
         self._update_gpu_usage()
