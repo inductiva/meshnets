@@ -1,4 +1,5 @@
 absl-py
+meshio
 pyvista
 torch==2.0.1
 -f https://data.pyg.org/whl/torch-2.0.1+cpu.html
@@ -8,3 +9,5 @@ pytorch_lightning==1.6.*
 ray[default]
 ray_lightning
 mlflow
+google-cloud-storage
+gputil
