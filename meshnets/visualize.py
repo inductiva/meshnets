@@ -15,15 +15,12 @@ from meshnets.utils import model_loading
 
 FLAGS = flags.FLAGS
 
-# Random seed flag
 flags.DEFINE_integer('random_seed', 21,
                      'The seed to initialize the random number generator.')
 
-# Data path flags
 flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder containing the mesh files.')
 
-# Dataset split flags
 flags.DEFINE_float('train_split', 0.9,
                    'The fraction of the dataset used for traing.')
 flags.DEFINE_float('validation_split', 0.1,
