@@ -18,7 +18,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('random_seed', 21,
                      'The seed to initialize the random number generator.')
 
-flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
+flags.DEFINE_string('data_dir', os.path.join('data', '0_5k_simulations'),
                     'Path to the folder containing the mesh files.')
 
 flags.DEFINE_float('train_split', 0.9,
@@ -60,11 +60,12 @@ def main(_):
     mesh_path = dataset.get_mesh_path(sample_idx)
     graph_path = dataset.get_graph_path(sample_idx)
 
-    graph = torch.load(graph_path)
-    graph = wrapper.normalize_labels(graph)
-    normalized_groundtruth = graph.y.detach().numpy()
+    with torch.no_grad():
+        graph = torch.load(graph_path)
+        graph = wrapper.normalize_labels(graph)
+        normalized_groundtruth = graph.y
 
-    prediction = wrapper(graph).detach().numpy()
+        prediction = wrapper(graph)
 
     if FLAGS.start_xvfb:
         pv.start_xvfb()
