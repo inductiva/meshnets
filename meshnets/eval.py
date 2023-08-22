@@ -25,6 +25,8 @@ flags.DEFINE_float('train_split', 0.9,
 flags.DEFINE_float('validation_split', 0.1,
                    'The fraction of the dataset used for validation.')
 
+flags.DEFINE_integer('batch_size', 8, 'The batch size for evaluation.')
+
 flags.DEFINE_string('tracking_uri', None,
                     'The tracking URI for the MLFlow experiments.')
 
@@ -45,7 +47,7 @@ def main(_):
         dataset, [FLAGS.train_split, FLAGS.validation_split])
 
     validation_dataloader = DataLoader(validation_dataset,
-                                       batch_size=8,
+                                       batch_size=FLAGS.batch_size,
                                        shuffle=False)
 
     wrapper = model_loading.load_model_from_mlflow(FLAGS.tracking_uri,
