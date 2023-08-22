@@ -32,8 +32,10 @@ def _validate_scalars(scalars: np.array) -> np.array:
         return scalars
     elif scalars.ndim == 2 and scalars.shape[1] == 1:
         return scalars.flatten()
-    elif scalars.ndim > 1:
-        raise ValueError("Argument 'scalars' must have a single dimension.")
+    else:
+        raise ValueError(
+            f"Argument 'scalars' has invalid dimensions : {scalars.shape}. "
+            'Dimensions must be (None,) or (None, 1).')
 
 
 def plot_mesh_with_scalars(mesh_path: str,
