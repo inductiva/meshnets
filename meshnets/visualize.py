@@ -34,11 +34,10 @@ flags.DEFINE_string('run_id', None, 'The run id of the experiment to load.')
 flags.DEFINE_integer('checkpoint', 0,
                      'The checkpoint to load from the experiment.')
 
-flags.DEFINE_bool('start_xvfb', False, 'Wheter to start xvfb or not.')
+flags.DEFINE_bool('start_xvfb', False, 'Whether to start xvfb or not.')
 
-flags.DEFINE_string('save_dir', 'img', 'Directory where to save the plots.')
-
-flags.DEFINE_string('file_name', 'plot.png', 'The name of the the plot file.')
+flags.DEFINE_string('output_file_path', os.path.join('imgs', 'plot.png'),
+                    'File path to save the plot.')
 
 
 def main(_):
@@ -76,9 +75,7 @@ def main(_):
                                             clim=None,
                                             rot_z=180,
                                             off_screen=False,
-                                            screenshot=os.path.join(
-                                                FLAGS.save_dir,
-                                                FLAGS.file_name))
+                                            screenshot=FLAGS.output_file_path)
 
 
 if __name__ == '__main__':
