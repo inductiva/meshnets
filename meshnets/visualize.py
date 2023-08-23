@@ -18,7 +18,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('random_seed', 21,
                      'The seed to initialize the random number generator.')
 
-flags.DEFINE_string('data_dir', os.path.join('data', '0_5k_simulations'),
+flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder containing the mesh files.')
 
 flags.DEFINE_float('train_split', 0.9,
