@@ -1,7 +1,8 @@
 """"Define the GraphEncoder class."""
 
+from typing import Tuple
+
 import torch
-from torch_geometric.data import Batch
 
 from meshnets.modules.mlp import MLP
 
@@ -27,13 +28,14 @@ class GraphEncoder(torch.nn.Module):
                               ] + (num_mlp_layers + 1) * [latent_size]
         self.edge_encoder = MLP(edge_encoder_widths, layer_norm=True)
 
-    def forward(self, graph: Batch) -> Batch:
-        """Encode the node and edge features of a batch of graphs
-        by applying the corresponding MLP encoder to each feature.
+    def forward(self, x: torch.Tensor,
+                edge_attr: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Encode the node and edge features of graphs by applying
+        the corresponding MLP encoder to each feature.
         
-        Return the enconded batch."""
+        Return the encoded features."""
 
-        graph.x = self.node_encoder(graph.x)
-        graph.edge_attr = self.edge_encoder(graph.edge_attr)
+        x = self.node_encoder(x)
+        edge_attr = self.edge_encoder(edge_attr)
 
-        return graph
+        return x, edge_attr

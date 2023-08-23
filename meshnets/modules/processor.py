@@ -1,8 +1,8 @@
 """"Define the Processor and ProcesserLayer classes."""
 
+from typing import Tuple
+
 import torch
-from torch.nn import Sequential
-from torch_geometric.data import Batch
 from torch_geometric.nn.conv import MessagePassing
 import torch_scatter
 
@@ -32,24 +32,26 @@ class MGNProcessorLayer(MessagePassing):
                           ] + (num_mlp_layers + 1) * [latent_size]
         self.node_mlp = MLP(node_mlp_widths, layer_norm=True)
 
-    def forward(self, graph: Batch) -> Batch:
+    def forward(self, x: torch.Tensor, edge_index: torch.LongTensor,
+                edge_attr: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Propagate information on edges, then compute updated node features.
         
-        Returns the graph with updated edge and node features."""
+        Returns the updated edge and node features."""
 
-        aggregated_edges, updated_edges = self.propagate(
-            edge_index=graph.edge_index, x=graph.x, edge_attr=graph.edge_attr)
+        aggregated_edges, updated_edges = self.propagate(edge_index=edge_index,
+                                                         x=x,
+                                                         edge_attr=edge_attr)
 
         # Update the nodes with a residual connection
-        updated_nodes = torch.cat([graph.x, aggregated_edges], dim=1)
-        updated_nodes = self.node_mlp(updated_nodes) + graph.x
+        updated_nodes = torch.cat([x, aggregated_edges], dim=1)
+        updated_nodes = self.node_mlp(updated_nodes) + x
 
         # update the graph features
-        graph.x = updated_nodes
-        graph.edge_attr = updated_edges
+        x = updated_nodes
+        edge_attr = updated_edges
 
-        return graph
+        return x, edge_attr
 
     def message(self, x_i, x_j, edge_attr):
 
@@ -69,6 +71,10 @@ class MGNProcessorLayer(MessagePassing):
 
         return aggregated_edges, updated_edges
 
+    def __repr__(self) -> str:
+        """Use torch.nn.Module representation."""
+        return torch.nn.Module.__repr__(self)
+
 
 class MGNProcessor(torch.nn.Module):
     """MGN Processor for graphs.
@@ -84,21 +90,27 @@ class MGNProcessor(torch.nn.Module):
         self._num_mlp_layers = num_mlp_layers
         self._message_passing_steps = message_passing_steps
 
-        self.processor = self._build_processor()
+        self.processor_layers = self._build_processor()
 
     def _build_processor(self):
-        """Build the GraphProcessor as a sequence of ProcessorLayer
-        with the given latent size and number of layers."""
+        """Build the GraphProcessor as a list of ProcessorLayer
+        with the given latent size and number of MLP layers."""
 
-        layers = []
-        for _ in range(self._message_passing_steps):
-            layers.append(
-                MGNProcessorLayer(self._latent_size, self._num_mlp_layers))
+        processor_layers = torch.nn.ModuleList([
+            MGNProcessorLayer(latent_size=self._latent_size,
+                              num_mlp_layers=self._num_mlp_layers)
+            for _ in range(self._message_passing_steps)
+        ])
 
-        return Sequential(*layers)
+        return processor_layers
 
-    def forward(self, graph: Batch) -> Batch:
-        """Apply the GraphProcessor to a batch of graphs.
+    def forward(self, x: torch.Tensor, edge_index: torch.LongTensor,
+                edge_attr: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Apply the GraphProcessor to graph data.
         
-        Return the batch with processed features."""
-        return self.processor(graph)
+        Return the processed features."""
+
+        for layer in self.processor_layers:
+            x, edge_attr = layer(x, edge_index, edge_attr)
+
+        return x, edge_attr
