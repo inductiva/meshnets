@@ -12,61 +12,36 @@ class MGNLightningWrapper(pl.LightningModule):
 
     def __init__(self,
                  model: Type[torch.nn.Module],
-                 data_stats: dict,
+                 y_mean: torch.Tensor,
+                 y_std: torch.Tensor,
                  learning_rate: float = 1e-3,
                  **model_args):
-        """Initialize for a given model, its arguments, a dictionnary of
-        data statistics for normalization, and a learning rate.
-        
-        The statistics dictionnary is expected to have
-        the following fields:
-            'x_mean'
-            'x_std'
-            'edge_attr_mean'
-            'eadge_attr_std'
-            'y_mean'
-            'y_std'
+        """Initialize for a given model, its arguments, label statistics,
+        and a learning rate.
         """
         super().__init__()
 
         self.save_hyperparameters()
 
+        self.y_mean = y_mean
+        self.y_std = y_std
+
         self.model = model(**model_args)
-        self.data_stats = data_stats
         self.learning_rate = learning_rate
 
-    def normalize_input(self, batch: Batch) -> Batch:
-        """Normalize the input features in a batch.
-        
-        The node and edge features are normalized using the mean and std
-        statistics found in the data_stats dictionnary."""
-
-        # Send the stats to the same device as the data and normalize
-        batch.x = (batch.x - self.data_stats['x_mean'].to(
-            batch.x.device)) / self.data_stats['x_std'].to(batch.x.device)
-
-        batch.edge_attr = (
-            batch.edge_attr - self.data_stats['edge_attr_mean'].to(
-                batch.edge_attr.device)) / self.data_stats['edge_attr_std'].to(
-                    batch.edge_attr.device)
-
-        return batch
-
-    def normalize_labels(self, batch: Batch) -> Batch:
+    def normalize_labels(self, y: torch.Tensor) -> torch.Tensor:
         """Normalize the labels in a batch.
         
-        The labels are normalized using the mean and std statistics
-        found in the data_stats dictionnary."""
+        The labels are normalized according to the mean and std given
+        to the wrapper."""
 
         # Send the stats to the same device as the data and normalize
-        batch.y = (batch.y - self.data_stats['y_mean'].to(
-            batch.y.device)) / self.data_stats['y_std'].to(batch.y.device)
+        y = (y - self.y_mean.to(y.device)) / self.y_std.to(y.device)
 
-        return batch
+        return y
 
     def forward(self, batch: Batch) -> torch.Tensor:
-        """Normalize the batch before making a forward pass in the model."""
-        batch = self.normalize_input(batch)
+        """Make a forward pass in the model."""
         return self.model(batch)
 
     def training_step(self, batch: Batch, _) -> dict:
@@ -88,12 +63,11 @@ class MGNLightningWrapper(pl.LightningModule):
         return {'val_loss': val_loss}
 
     def compute_loss(self, batch: Batch) -> torch.Tensor:
-        # Normalize the batch before making a forward pass in the model
-        batch = self.normalize_input(batch)
+        # Make a forward pass in the model
         predictions = self.model(batch)
         # Normalize the labels before computing the loss
-        batch = self.normalize_labels(batch)
-        loss = torch.nn.functional.mse_loss(predictions, batch.y)
+        y_norm = self.normalize_labels(batch.y)
+        loss = torch.nn.functional.mse_loss(predictions, y_norm)
         return loss
 
     def configure_optimizers(self) -> torch.optim.Adam:

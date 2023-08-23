@@ -87,7 +87,12 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         latent_size=latent_size,
         num_mlp_layers=num_mlp_layers,
         message_passing_steps=message_passing_steps,
-        data_stats=train_stats,
+        x_mean=train_stats['x_mean'],
+        x_std=train_stats['x_std'],
+        edge_attr_mean=train_stats['edge_attr_mean'],
+        edge_attr_std=train_stats['edge_attr_std'],
+        y_mean=train_stats['y_mean'],
+        y_std=train_stats['y_std'],
         learning_rate=learning_rate)
     num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
 
