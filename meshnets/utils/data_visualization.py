@@ -2,7 +2,6 @@
 
 from typing import Union
 from typing import Tuple
-import warnings
 
 import numpy as np
 import pyvista as pv
@@ -24,6 +23,21 @@ def plot_mesh(mesh_path: str,
               screenshot=screenshot)
 
 
+def _validate_scalars(scalars: np.array) -> np.array:
+
+    if scalars is None:
+        raise TypeError("Argument 'scalars' is None.")
+
+    if scalars.ndim == 1:
+        return scalars
+    elif scalars.ndim == 2 and scalars.shape[1] == 1:
+        return scalars.flatten()
+    else:
+        raise ValueError(
+            f"Argument 'scalars' has invalid dimensions : {scalars.shape}. "
+            'Dimensions must be (None,) or (None, 1).')
+
+
 def plot_mesh_with_scalars(mesh_path: str,
                            scalars: np.array,
                            clim: Union[Tuple[float, float], None] = None,
@@ -35,9 +49,7 @@ def plot_mesh_with_scalars(mesh_path: str,
     mesh = pv.read(mesh_path)
     mesh = mesh.rotate_z(rot_z)
 
-    if scalars is None:
-        warnings.warn(
-            "Argument 'scalars' is None. Displaying with active scalar array.")
+    scalars = _validate_scalars(scalars)
 
     mesh.plot(scalars=scalars,
               show_edges=True,
@@ -58,6 +70,9 @@ def plot_mesh_comparison(mesh_path: str,
 
     mesh = pv.read(mesh_path)
     mesh = mesh.rotate_z(rot_z)
+
+    ground_truth = _validate_scalars(ground_truth)
+    prediction = _validate_scalars(prediction)
 
     plotter = pv.Plotter(shape=(1, 3), off_screen=off_screen)
 
