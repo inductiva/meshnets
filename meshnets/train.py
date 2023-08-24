@@ -22,22 +22,22 @@ flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder for the processed data files.')
 
 # Dataset splits path
-flags.DEFINE_float('train_split', 0.8,
+flags.DEFINE_float('train_split', 0.9,
                    'The fraction of the dataset used for traing.')
-flags.DEFINE_float('validation_split', 0.2,
+flags.DEFINE_float('validation_split', 0.1,
                    'The fraction of the dataset used for validation.')
 
 # Dataloaders flags
-flags.DEFINE_integer('batch_size', 3, 'The batch size.')
+flags.DEFINE_integer('batch_size', 8, 'The batch size.')
 flags.DEFINE_integer('num_workers_loader', 2,
                      'The number of workers for the data loaders.')
 
 # Model parameters flags
-flags.DEFINE_integer('latent_size', 8,
+flags.DEFINE_integer('latent_size', 32,
                      'The size of the latent features in the model.')
 flags.DEFINE_integer('num_mlp_layers', 2,
                      'The number of hidden layers in the MLPs.')
-flags.DEFINE_integer('message_passing_steps', 5,
+flags.DEFINE_integer('message_passing_steps', 30,
                      'The number of message passing steps in the processor.')
 
 # Lightning wrapper flags
@@ -57,8 +57,8 @@ flags.DEFINE_integer('num_cpus_per_worker', 24,
 flags.DEFINE_bool('use_gpu', True, 'Whether to use gpu or not.')
 
 # Trainer flags
-flags.DEFINE_integer('max_epochs', 200, 'The number of epochs.')
-flags.DEFINE_integer('log_every_n_steps', 1, 'How often to log within steps.')
+flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
+flags.DEFINE_integer('log_every_n_steps', 75, 'How often to log within steps.')
 
 
 def main(_):
