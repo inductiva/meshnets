@@ -39,6 +39,7 @@ class MeshGraphNet(torch.nn.Module):
 
         self.decoder = GraphDecoder(output_size, latent_size, num_mlp_layers)
 
+    @torch.no_grad()
     def normalize_input(
             self, x: torch.Tensor,
             edge_attr: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:

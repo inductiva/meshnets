@@ -29,6 +29,7 @@ class MGNLightningWrapper(pl.LightningModule):
         self.model = model(**model_args)
         self.learning_rate = learning_rate
 
+    @torch.no_grad()
     def normalize_labels(self, y: torch.Tensor) -> torch.Tensor:
         """Normalize the labels in a batch.
         
