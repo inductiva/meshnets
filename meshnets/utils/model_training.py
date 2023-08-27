@@ -19,7 +19,8 @@ from meshnets.utils.callbacks import GradientNorm
 from meshnets.utils.callbacks import MLFlowLoggerFinalizeCheckpointer
 
 
-def train_model(config, experiment_config, train_dataset, validation_dataset):
+def train_model(config, experiment_config, train_dataset,
+                validation_datasets_names, validation_datasets):
     """Train the MeshGraphNet model given the training config, experiment config
     and datasets.
     
@@ -66,17 +67,22 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     # Compute the training dataset stats for normalization
     train_stats = train_dataset.dataset[train_dataset.indices].get_stats()
 
-    # Load the datasets
+    # Load the training dataset
     train_loader = DataLoader(train_dataset,
                               batch_size=batch_size,
                               num_workers=num_workers_loader,
                               persistent_workers=True,
                               shuffle=True)
-    validation_loader = DataLoader(validation_dataset,
-                                   batch_size=batch_size,
-                                   num_workers=num_workers_loader,
-                                   persistent_workers=True,
-                                   shuffle=False)
+
+    # Load the validation datasets
+    validation_loaders = []
+    for val_dataset in validation_datasets:
+        validation_loaders.append(
+            DataLoader(val_dataset,
+                       batch_size=batch_size,
+                       num_workers=num_workers_loader,
+                       persistent_workers=True,
+                       shuffle=False))
 
     # Define the wrapper and the model
     lightning_wrapper = MGNLightningWrapper(
@@ -93,7 +99,10 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         edge_attr_std=train_stats['edge_attr_std'],
         y_mean=train_stats['y_mean'],
         y_std=train_stats['y_std'],
+        validation_datasets_names=validation_datasets_names,
         learning_rate=learning_rate)
+
+    train_dataset_name = validation_datasets_names[0]
     num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
 
     # The logger creates a new MLFlow run automatically
@@ -101,13 +110,19 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
     # Log the config parameters and training dataset stats for the run to MLFlow
-    mlf_logger.log_hyperparams({'num_params': num_params})
+    mlf_logger.log_hyperparams({
+        'train_dataset_name': train_dataset_name,
+        'num_params': num_params
+    })
 
     # Define the list of callbacks
     callbacks = []
+    monitor_metric = f'val_loss_{train_dataset_name}'
+    # Add a suffix following lightning logging behavior
+    suffix = '' if len(validation_datasets_names) == 1 else '/dataloader_idx_0'
 
     # Save checkpoints locally in the mlflow folder
-    checkpoint_callback = ModelCheckpoint(monitor='val_loss',
+    checkpoint_callback = ModelCheckpoint(monitor=monitor_metric + suffix,
                                           save_top_k=save_top_k)
     callbacks.append(checkpoint_callback)
 
@@ -143,4 +158,4 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
                          log_every_n_steps=log_every_n_steps,
                          accelerator=accelerator)
 
-    trainer.fit(lightning_wrapper, train_loader, validation_loader)
+    trainer.fit(lightning_wrapper, train_loader, validation_loaders)

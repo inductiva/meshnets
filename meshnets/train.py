@@ -20,6 +20,8 @@ flags.DEFINE_integer('random_seed', 21,
 # Processed data path
 flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder for the processed data files.')
+flags.DEFINE_multi_string(
+    'val_data_dirs', [], 'Paths to the folders for the validation data files.')
 
 # Dataset splits path
 flags.DEFINE_float('train_split', 0.8,
@@ -44,7 +46,7 @@ flags.DEFINE_integer('message_passing_steps', 5,
 flags.DEFINE_float('learning_rate', 1e-3, 'The training learning rate.')
 
 # Logger flags
-flags.DEFINE_string('experiment_name', 'MGN-training',
+flags.DEFINE_string('experiment_name', 'MGN-multival-test',
                     'The MLFlow experiment name.')
 
 # Checkpoint flags
@@ -57,7 +59,7 @@ flags.DEFINE_integer('num_cpus_per_worker', 24,
 flags.DEFINE_bool('use_gpu', True, 'Whether to use gpu or not.')
 
 # Trainer flags
-flags.DEFINE_integer('max_epochs', 200, 'The number of epochs.')
+flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
 flags.DEFINE_integer('log_every_n_steps', 1, 'How often to log within steps.')
 
 
@@ -67,9 +69,22 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
+    dataset_name = os.path.basename(FLAGS.data_dir)
     dataset = FromDiskGeometricDataset(FLAGS.data_dir)
     train_dataset, validation_dataset = random_split(
         dataset, [FLAGS.train_split, FLAGS.validation_split])
+
+    val_datasets_names = [dataset_name]
+    val_datasets = [validation_dataset]
+
+    for val_data_dir in FLAGS.val_data_dirs:
+        dataset_name = os.path.basename(val_data_dir)
+        dataset = FromDiskGeometricDataset(val_data_dir)
+        _, validation_dataset = random_split(
+            dataset, [FLAGS.train_split, FLAGS.validation_split])
+
+        val_datasets_names.append(dataset_name)
+        val_datasets.append(validation_dataset)
 
     config = {
         'batch_size': FLAGS.batch_size,
@@ -90,8 +105,11 @@ def main(_):
         'save_top_k': FLAGS.save_top_k,
     }
 
-    model_training.train_model(config, experiment_config, train_dataset,
-                               validation_dataset)
+    model_training.train_model(config,
+                               experiment_config,
+                               train_dataset,
+                               validation_datasets_names=val_datasets_names,
+                               validation_datasets=val_datasets)
 
 
 if __name__ == '__main__':
