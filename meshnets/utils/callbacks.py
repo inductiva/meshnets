@@ -46,6 +46,7 @@ class MLFlowLoggerFinalizeCheckpointer(MLFlowLogger):
             self.experiment.log_artifacts(self.run_id,
                                           self._checkpoint_callback.dirpath,
                                           artifact_path='checkpoints')
+        super().finalize(status)
 
 
 class GPUUsage(Callback):

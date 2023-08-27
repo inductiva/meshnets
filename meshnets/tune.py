@@ -4,6 +4,7 @@ import os
 
 from absl import app
 from absl import flags
+import mlflow
 import ray
 from ray import tune
 import torch
@@ -24,27 +25,26 @@ flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder for the processed data files.')
 
 # Dataset splits path
-flags.DEFINE_float('train_split', 0.8,
+flags.DEFINE_float('train_split', 0.9,
                    'The fraction of the dataset used for traing.')
-flags.DEFINE_float('validation_split', 0.2,
+flags.DEFINE_float('validation_split', 0.1,
                    'The fraction of the dataset used for validation.')
 
 # Dataloaders flags
-flags.DEFINE_multi_integer('batch_size', [4, 8], 'The batch size.')
+flags.DEFINE_multi_integer('batch_size', [8, 16], 'The batch size.')
 flags.DEFINE_integer('num_workers_loader', 2,
                      'The number of workers for the data loaders.')
 
 # Model parameters flags
-flags.DEFINE_list('latent_size', [8, 16, 32, 64],
+flags.DEFINE_list('latent_size', [16, 32, 64],
                   'The size of the latent features in the model.')
-flags.DEFINE_list('num_mlp_layers', [2, 3],
+flags.DEFINE_list('num_mlp_layers', [2],
                   'The number of hidden layers in the MLPs.')
-flags.DEFINE_list('message_passing_steps', [5, 10, 15],
+flags.DEFINE_list('message_passing_steps', [20, 30, 40],
                   'The number of message passing steps in the processor.')
 
 # Lightning wrapper flags
-flags.DEFINE_list('learning_rate', [1e-2, 1e-3, 1e-4],
-                  'The training learning rate.')
+flags.DEFINE_list('learning_rate', [1e-3], 'The training learning rate.')
 
 # Logger flags
 flags.DEFINE_string('experiment_name', 'MGN-tuning',
@@ -63,7 +63,7 @@ flags.DEFINE_float(
 
 # Trainer flags
 flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
-flags.DEFINE_integer('log_every_n_steps', 1, 'How often to log within steps.')
+flags.DEFINE_integer('log_every_n_steps', 75, 'How often to log within steps.')
 
 
 def main(_):
@@ -108,6 +108,9 @@ def main(_):
         'cpu': FLAGS.num_cpus_per_worker,
         'gpu': FLAGS.num_gpus_per_worker
     }
+
+    # Create the experiment to avoid its duplicated creation by Ray workers
+    mlflow.create_experiment(FLAGS.experiment_name)
 
     trainable = tune.with_parameters(model_training.train_model,
                                      experiment_config=experiment_config,

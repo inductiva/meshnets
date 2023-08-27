@@ -94,19 +94,19 @@ def train_model(config, experiment_config, train_dataset, validation_dataset):
         y_mean=train_stats['y_mean'],
         y_std=train_stats['y_std'],
         learning_rate=learning_rate)
+
     num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
 
     # The logger creates a new MLFlow run automatically
     # Checkpoints are logged as artifacts at the end of training
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
-    # Log the config parameters and training dataset stats for the run to MLFlow
+
+    mlf_logger.log_hyperparams({'batch_size': batch_size})
     mlf_logger.log_hyperparams({'num_params': num_params})
 
-    # Define the list of callbacks
     callbacks = []
 
-    # Save checkpoints locally in the mlflow folder
     checkpoint_callback = ModelCheckpoint(monitor='val_loss',
                                           save_top_k=save_top_k)
     callbacks.append(checkpoint_callback)
