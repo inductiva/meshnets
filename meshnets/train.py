@@ -46,7 +46,7 @@ flags.DEFINE_integer('message_passing_steps', 5,
 flags.DEFINE_float('learning_rate', 1e-3, 'The training learning rate.')
 
 # Logger flags
-flags.DEFINE_string('experiment_name', 'MGN-multival-test',
+flags.DEFINE_string('experiment_name', 'MGN-training',
                     'The MLFlow experiment name.')
 
 # Checkpoint flags
