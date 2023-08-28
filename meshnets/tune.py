@@ -23,6 +23,8 @@ flags.DEFINE_integer('random_seed', 21,
 # Processed data path
 flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder for the processed data files.')
+flags.DEFINE_multi_string(
+    'val_data_dirs', [], 'Paths to the folders for the validation data files.')
 
 # Dataset splits path
 flags.DEFINE_float('train_split', 0.9,
@@ -72,9 +74,22 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
+    dataset_name = os.path.basename(FLAGS.data_dir)
     dataset = FromDiskGeometricDataset(FLAGS.data_dir)
     train_dataset, validation_dataset = random_split(
         dataset, [FLAGS.train_split, FLAGS.validation_split])
+
+    val_datasets_names = [dataset_name]
+    val_datasets = [validation_dataset]
+
+    for val_data_dir in FLAGS.val_data_dirs:
+        dataset_name = os.path.basename(val_data_dir)
+        dataset = FromDiskGeometricDataset(val_data_dir)
+        _, validation_dataset = random_split(
+            dataset, [FLAGS.train_split, FLAGS.validation_split])
+
+        val_datasets_names.append(dataset_name)
+        val_datasets.append(validation_dataset)
 
     # Define the search space over which `tune` will run.
     config = {
@@ -112,10 +127,12 @@ def main(_):
     # Create the experiment to avoid its duplicated creation by Ray workers
     mlflow.create_experiment(FLAGS.experiment_name)
 
-    trainable = tune.with_parameters(model_training.train_model,
-                                     experiment_config=experiment_config,
-                                     train_dataset=train_dataset,
-                                     validation_dataset=validation_dataset)
+   trainable = tune.with_parameters(
+        model_training.train_model,
+        experiment_config=experiment_config,
+        train_dataset=train_dataset,
+        validation_datasets_names=val_datasets_names,
+        validation_datasets=val_datasets)
 
     ray.init()
     tune.run(trainable,

@@ -1,6 +1,7 @@
 """Define lightning wrappers."""
 
 from typing import Type
+from typing import Sequence
 
 import torch
 from torch_geometric.data import Batch
@@ -14,6 +15,7 @@ class MGNLightningWrapper(pl.LightningModule):
                  model: Type[torch.nn.Module],
                  y_mean: torch.Tensor,
                  y_std: torch.Tensor,
+                 validation_datasets_names: Sequence[str],
                  learning_rate: float = 1e-3,
                  **model_args):
         """Initialize for a given model, its arguments, label statistics,
@@ -28,6 +30,8 @@ class MGNLightningWrapper(pl.LightningModule):
 
         self.model = model(**model_args)
         self.learning_rate = learning_rate
+
+        self.validation_datasets_names = validation_datasets_names
 
     @torch.no_grad()
     def normalize_labels(self, y: torch.Tensor) -> torch.Tensor:
@@ -52,11 +56,12 @@ class MGNLightningWrapper(pl.LightningModule):
         self.log('loss', loss, on_epoch=True, batch_size=batch.num_nodes)
         return {'loss': loss}
 
-    def validation_step(self, batch: Batch, _) -> dict:
+    def validation_step(self, batch: Batch, _, dataloader_idx: int = 0) -> dict:
         val_loss = self.compute_loss(batch)
         # batch_size is set to the number of nodes in the batch in order
         # to weight the batch losses correctly
-        self.log('val_loss',
+        val_dataset_name = self.validation_datasets_names[dataloader_idx]
+        self.log(f'val_loss_{val_dataset_name}',
                  val_loss,
                  on_epoch=True,
                  batch_size=batch.num_nodes,
