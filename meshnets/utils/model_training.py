@@ -109,13 +109,14 @@ def train_model(config, experiment_config, train_dataset,
     # Checkpoints are logged as artifacts at the end of training
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
+
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({
         'train_dataset_name': train_dataset_name,
+        'batch_size': batch_size,
         'num_params': num_params
     })
 
-    # Define the list of callbacks
     callbacks = []
     monitor_metric = f'val_loss_{train_dataset_name}'
     # Add a suffix following lightning logging behavior
