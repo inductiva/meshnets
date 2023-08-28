@@ -127,7 +127,7 @@ def main(_):
     # Create the experiment to avoid its duplicated creation by Ray workers
     mlflow.create_experiment(FLAGS.experiment_name)
 
-   trainable = tune.with_parameters(
+    trainable = tune.with_parameters(
         model_training.train_model,
         experiment_config=experiment_config,
         train_dataset=train_dataset,
