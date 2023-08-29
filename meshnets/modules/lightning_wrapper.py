@@ -40,7 +40,6 @@ class MGNLightningWrapper(pl.LightningModule):
         The labels are normalized according to the mean and std given
         to the wrapper."""
 
-        # Send the stats to the same device as the data and normalize
         y = (y - self.y_mean.to(y.device)) / self.y_std.to(y.device)
 
         return y
@@ -52,7 +51,6 @@ class MGNLightningWrapper(pl.LightningModule):
         The labels are unnormalized according to the mean and std given
         to the wrapper."""
 
-        # Send the stats to the same device as the data and normalize
         y = (y * self.y_std.to(y.device)) + self.y_mean.to(y.device)
 
         return y
