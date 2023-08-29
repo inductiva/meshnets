@@ -40,14 +40,25 @@ class MGNLightningWrapper(pl.LightningModule):
         The labels are normalized according to the mean and std given
         to the wrapper."""
 
-        # Send the stats to the same device as the data and normalize
         y = (y - self.y_mean.to(y.device)) / self.y_std.to(y.device)
 
         return y
 
+    @torch.no_grad()
+    def unnormalize_labels(self, y: torch.Tensor) -> torch.Tensor:
+        """Unnormalize the labels in a batch.
+        
+        The labels are unnormalized according to the mean and std given
+        to the wrapper."""
+
+        y = (y * self.y_std.to(y.device)) + self.y_mean.to(y.device)
+
+        return y
+
     def forward(self, batch: Batch) -> torch.Tensor:
-        """Make a forward pass in the model."""
-        return self.model(batch)
+        """Make a forward pass in the model and unnormalize prediction."""
+        prediction = self.model(batch)
+        return self.unnormalize_labels(prediction)
 
     def training_step(self, batch: Batch, _) -> dict:
         loss = self.compute_loss(batch)
