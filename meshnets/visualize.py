@@ -36,6 +36,9 @@ flags.DEFINE_integer('checkpoint', 0,
 
 flags.DEFINE_bool('start_xvfb', False, 'Whether to start xvfb or not.')
 
+flags.DEFINE_bool('normalized', False,
+                  'Wether to plot the normalized pressure or not.')
+
 flags.DEFINE_string('output_file_path', os.path.join('imgs', 'plot.png'),
                     'File path to save the plot.')
 
@@ -61,16 +64,19 @@ def main(_):
 
     with torch.no_grad():
         graph = torch.load(graph_path)
-        graph = wrapper.normalize_labels(graph)
-        normalized_groundtruth = graph.y
 
-        prediction = wrapper(graph)
+        if FLAGS.normalized:
+            groundtruth = wrapper.normalize_labels(graph.y)
+            prediction = wrapper.normalize_labels(wrapper(graph))
+        else:
+            groundtruth = graph.y
+            prediction = wrapper(graph)
 
     if FLAGS.start_xvfb:
         pv.start_xvfb()
 
     data_visualization.plot_mesh_comparison(mesh_path,
-                                            normalized_groundtruth,
+                                            groundtruth,
                                             prediction,
                                             clim=None,
                                             rot_z=180,
