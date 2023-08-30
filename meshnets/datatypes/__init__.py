@@ -1,2 +1,2 @@
 """Init"""
-from .graph import *
+from .graph import EdgeSet, Graph

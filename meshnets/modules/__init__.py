@@ -1,7 +1,7 @@
 """Init"""
-from .decoder import *
-from .encoder import *
-from .lightning_wrapper import *
-from .mlp import *
-from .model import *
-from .processor import *
+from .decoder import GraphDecoder
+from .encoder import GraphEncoder
+from .lightning_wrapper import MGNLightningWrapper
+from .mlp import MLP
+from .model import MeshGraphNet
+from .processor import MGNProcessorLayer, MGNProcessor
