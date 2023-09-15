@@ -20,9 +20,9 @@ models.
 
 ## Data
 
-The first thing that it is required to train neural networks is
-obviously data. If you have your own dataset, great!! You only need to
-make sure that it obeys the following structure:
+The first thing that is required to train neural networks is obviously
+data. If you have your own dataset, great!! You only need to make sure
+that it obeys the following structure:
 
 ```
 .
@@ -49,7 +49,7 @@ The next step is to pre-process the dataset. To do this just run the
 script:
 
 ```bash
-pytohn process --data_dir=<Path to your dataset>
+python process --data_dir=<Path to your dataset>
 ```
 
 You will see `.pt` objects appearing next to the `.vtk` objects. These
@@ -96,7 +96,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Next, because `meshents` is actually packaged we can install it using:
+Next, because `meshnets` is actually packaged we can install it using:
 
 ```bash
 pip install -e .
