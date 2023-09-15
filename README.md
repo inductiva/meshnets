@@ -41,7 +41,7 @@ particular dataset has 1000 examples of objects:
 
 ![alt_image](readme_images/dataset_example.png)
 
-Actually in the image we can see an example of an object and the
+Actually, in the image, we can see an example of an object and the
 predictions of one of our models.
 
 
