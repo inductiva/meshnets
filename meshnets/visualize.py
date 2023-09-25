@@ -23,8 +23,6 @@ flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
 
 flags.DEFINE_float('train_split', 0.9,
                    'The fraction of the dataset used for traing.')
-flags.DEFINE_float('validation_split', 0.1,
-                   'The fraction of the dataset used for validation.')
 
 flags.DEFINE_string('tracking_uri', None,
                     'The tracking URI for the MLFlow experiments.')
@@ -50,8 +48,10 @@ def main(_):
         torch.manual_seed(random_seed)
 
     dataset = FromDiskGeometricDataset(FLAGS.data_dir)
+    size_dataset = len(dataset)
+    num_training = int(FLAGS.train_split * size_dataset)
     _, validation_dataset = random_split(
-        dataset, [FLAGS.train_split, FLAGS.validation_split])
+        dataset, [num_training, size_dataset - num_training])
 
     wrapper = model_loading.load_model_from_mlflow(FLAGS.tracking_uri,
                                                    FLAGS.run_id,
