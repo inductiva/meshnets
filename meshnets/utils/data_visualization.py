@@ -107,5 +107,35 @@ def plot_mesh_comparison(mesh_path: str,
                      cmap='RdBu_r',
                      clim=clim,
                      copy_mesh=True)
+    plotter.show(screenshot=screenshot)
+
+
+def plot_relative_error(mesh_path: str,
+                        ground_truth: np.array,
+                        prediction: np.array,
+                        clim: Union[Tuple[float, float], None] = None,
+                        rot_z: int = 0,
+                        off_screen: bool = False,
+                        screenshot: Union[str, None] = None):
+    mesh = pv.read(mesh_path)
+    mesh = mesh.rotate_z(rot_z)
+
+    ground_truth = _validate_scalars(ground_truth)
+    prediction = _validate_scalars(prediction)
+
+    plotter = pv.Plotter(shape=(1, 1), off_screen=off_screen)
+
+    # Relative error
+    difference = prediction - ground_truth
+    relative_error = np.abs(difference / (ground_truth + 1e-7))
+
+    plotter.subplot(0, 0)
+    plotter.add_text('Relative Error')
+    plotter.add_mesh(mesh,
+                     scalars=relative_error,
+                     show_edges=True,
+                     roughness=1,
+                     clim=clim,
+                     copy_mesh=True)
 
     plotter.show(screenshot=screenshot)

@@ -82,6 +82,22 @@ def main(_):
                                             off_screen=False,
                                             screenshot=FLAGS.output_file_path)
 
+    data_visualization.plot_relative_error(mesh_path,
+                                           groundtruth,
+                                           prediction,
+                                           clim=None,
+                                           rot_z=180,
+                                           off_screen=False,
+                                           screenshot=FLAGS.output_file_path)
+
+    data_visualization.plot_relative_error(mesh_path,
+                                           groundtruth,
+                                           prediction,
+                                           clim=[0, 1],
+                                           rot_z=180,
+                                           off_screen=False,
+                                           screenshot=FLAGS.output_file_path)
+
 
 if __name__ == '__main__':
     app.run(main)
