@@ -1,5 +1,4 @@
 """The main file for result visualization."""
-
 import os
 
 from absl import app
