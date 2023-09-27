@@ -16,9 +16,9 @@ flags.DEFINE_list("y_geometry", [-5, 5], "Y geometry of the domain.")
 flags.DEFINE_list("z_geometry", [-2, 10], "Z geometry of the domain.")
 flags.DEFINE_integer("num_iterations", 100, "Number of iterations to run.")
 
-flags.DEFINE_string("machine_type", "c2-standard-16", 'Machine type.')
-flags.DEFINE_integer("num_machines", 1, 'Number of machines.')
-flags.DEFINE_integer("disk_size_gb", 40, 'Disk size in GB.')
+flags.DEFINE_string("machine_type", "c2-standard-16", "Machine type.")
+flags.DEFINE_integer("num_machines", 1, "Number of machines.")
+flags.DEFINE_integer("disk_size_gb", 40, "Disk size in GB.")
 
 flags.DEFINE_string("output_dataset", None, "Path to the output dataset.")
 
