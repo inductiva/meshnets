@@ -68,7 +68,7 @@ def main(_):
         for object_path in object_paths
     ]
 
-    # Make a json with the sim ids and the machine group name.
+    # Make a json with the task ids and the machine group name.
     with open(os.path.join(FLAGS.output_dataset, "sim_info.json"),
               "w",
               encoding="utf-8") as f:
