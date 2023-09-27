@@ -69,7 +69,9 @@ def main(_):
     ]
 
     # Save all the tasks ids to a txt file.
-    with open(os.path.join(FLAGS.output_dataset, "task_ids.txt"), "w") as f:
+    with open(os.path.join(FLAGS.output_dataset, "task_ids.txt"),
+              "w",
+              encoding="utf-8") as f:
         for task_id in task_ids:
             f.write(str(task_id.id) + "\n")
 

@@ -21,7 +21,7 @@ def main(_):
     inductiva.api_key = os.environ["INDUCTIVA_API_KEY"]
 
     # Read the simulation ids
-    with open(FLAGS.path_to_sim_ids, "r") as f:
+    with open(FLAGS.path_to_sim_ids, "r", encoding="utf-8") as f:
         task_ids = f.read().splitlines()
     logging.info("Number of tasks: %s", len(task_ids))
 
