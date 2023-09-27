@@ -43,7 +43,7 @@ def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
 
 
 def main(_):
-    inductiva.api_key = os.environ['INDUCTIVA_API_KEY']
+    inductiva.api_key = os.environ["INDUCTIVA_API_KEY"]
     object_paths = [
         os.path.join(FLAGS.input_dataset, path)
         for path in os.listdir(FLAGS.input_dataset)
@@ -74,5 +74,5 @@ def main(_):
             f.write(str(task_id.id) + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(main)
