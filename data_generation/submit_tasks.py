@@ -3,6 +3,7 @@ from absl import app
 from absl import flags
 
 import os
+import json
 
 import inductiva
 
@@ -43,7 +44,6 @@ def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
 
 
 def main(_):
-    inductiva.api_key = os.environ["INDUCTIVA_API_KEY"]
     object_paths = [
         os.path.join(FLAGS.input_dataset, path)
         for path in os.listdir(FLAGS.input_dataset)
@@ -68,12 +68,15 @@ def main(_):
         for object_path in object_paths
     ]
 
-    # Save all the tasks ids to a txt file.
-    with open(os.path.join(FLAGS.output_dataset, "task_ids.txt"),
+    # Make a json with the sim ids and the machine group name.
+    with open(os.path.join(FLAGS.output_dataset, "sim_info.json"),
               "w",
               encoding="utf-8") as f:
-        for task_id in task_ids:
-            f.write(str(task_id.id) + "\n")
+        dict_to_save = {
+            "task_ids": [task_id.id for task_id in task_ids],
+            "machine_group": machine_group.name
+        }
+        json.dump(dict_to_save, f)
 
 
 if __name__ == "__main__":
