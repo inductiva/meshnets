@@ -14,30 +14,30 @@ from meshnets.utils import model_loading
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_integer('random_seed', 21,
-                     'The seed to initialize the random number generator.')
+flags.DEFINE_integer("random_seed", 21,
+                     "The seed to initialize the random number generator.")
 
-flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
-                    'Path to the folder containing the mesh files.')
+flags.DEFINE_string("data_dir", os.path.join("data", "dataset"),
+                    "Path to the folder containing the mesh files.")
 
-flags.DEFINE_float('train_split', 0.9,
-                   'The fraction of the dataset used for traing.')
+flags.DEFINE_float("train_split", 0.9,
+                   "The fraction of the dataset used for traing.")
 
-flags.DEFINE_string('tracking_uri', None,
-                    'The tracking URI for the MLFlow experiments.')
+flags.DEFINE_string("tracking_uri", None,
+                    "The tracking URI for the MLFlow experiments.")
 
-flags.DEFINE_string('run_id', None, 'The run id of the experiment to load.')
+flags.DEFINE_string("run_id", None, "The run id of the experiment to load.")
 
-flags.DEFINE_integer('checkpoint', 0,
-                     'The checkpoint to load from the experiment.')
+flags.DEFINE_integer("checkpoint", 0,
+                     "The checkpoint to load from the experiment.")
 
-flags.DEFINE_bool('start_xvfb', False, 'Whether to start xvfb or not.')
+flags.DEFINE_bool("start_xvfb", False, "Whether to start xvfb or not.")
 
-flags.DEFINE_bool('normalized', False,
-                  'Wether to plot the normalized pressure or not.')
+flags.DEFINE_bool("normalized", False,
+                  "Wether to plot the normalized pressure or not.")
 
-flags.DEFINE_string('output_file_path', os.path.join('imgs', 'plot.png'),
-                    'File path to save the plot.')
+flags.DEFINE_string("output_file_path", os.path.join("imgs", "plot.png"),
+                    "File path to save the plot.")
 
 
 def main(_):
@@ -78,7 +78,7 @@ def main(_):
                                             groundtruth,
                                             prediction,
                                             clim=None,
-                                            rot_z=180,
+                                            rotate_z=180,
                                             off_screen=False,
                                             screenshot=FLAGS.output_file_path)
 
@@ -86,7 +86,7 @@ def main(_):
                                            groundtruth,
                                            prediction,
                                            clim=None,
-                                           rot_z=180,
+                                           rotate_z=180,
                                            off_screen=False,
                                            screenshot=FLAGS.output_file_path)
 
@@ -94,10 +94,10 @@ def main(_):
                                            groundtruth,
                                            prediction,
                                            clim=[0, 1],
-                                           rot_z=180,
+                                           rotate_z=180,
                                            off_screen=False,
                                            screenshot=FLAGS.output_file_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(main)
