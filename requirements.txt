@@ -11,3 +11,5 @@ ray_lightning
 mlflow
 google-cloud-storage
 gputil
+inductiva
+inductiva[fluids_extra]
