@@ -18,7 +18,10 @@ inductiva.api_key = os.environ['INDUCTIVA_API_KEY']
 
 
 To submit the tasks use the script `submit_tasks.py`. This will submit
-the tasks to the API and save a `.txt` file with their IDs.
+the tasks to the API and save a `.txt` file with their IDs. To run the
+script you will `.vtk` objects over which to run the simulations. Once
+you have the `.vtk` objects over which to run the simulation run
+`python submit_tasks.py --input_dataset=<path to .vtk objects>`.
 
 To then fetch the output of these tasks you can run the script
 `download_tasks.py`. If no `--download_dir` is given the script will
