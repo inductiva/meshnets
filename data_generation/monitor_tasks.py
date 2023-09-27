@@ -4,7 +4,6 @@ from absl import flags
 from absl import logging
 
 import json
-import os
 
 import inductiva
 
