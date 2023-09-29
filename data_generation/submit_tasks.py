@@ -36,12 +36,12 @@ def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
     scenario = inductiva.fluids.WindTunnel(flow_velocity=flow_velocity,
                                            domain=domain_geometry)
 
-    task_id = scenario.simulate(object_path=obj_path,
-                                num_iterations=num_iterations,
-                                resolution="low",
-                                run_async=True,
-                                machine_group=machine_group)
-    return task_id
+    task = scenario.simulate(object_path=obj_path,
+                             num_iterations=num_iterations,
+                             resolution="low",
+                             run_async=True,
+                             machine_group=machine_group)
+    return task
 
 
 def main(_):
@@ -62,7 +62,7 @@ def main(_):
         disk_size_gb=FLAGS.disk_size_gb)
     machine_group.start()
 
-    obj_path_and_task_ids = [
+    obj_path_and_tasks = [
         (object_path,
          simulate_wind_tunnel_scenario(object_path, flow_velocity, x_geometry,
                                        y_geometry, z_geometry,
@@ -73,18 +73,17 @@ def main(_):
     # Copy the object files to a folder with path
     # FLAGS.output_dataset/task_id. This keeps track of the obj file
     # for the given file.
-    for object_path, taks_id in obj_path_and_task_ids:
-        os.makedirs(os.path.join(FLAGS.output_dataset, taks_id.id))
-        shutil.copy(
-            object_path,
-            os.path.join(FLAGS.output_dataset, taks_id.id, "object.obj"))
+    for object_path, task in obj_path_and_tasks:
+        os.makedirs(os.path.join(FLAGS.output_dataset, task.id))
+        shutil.copy(object_path,
+                    os.path.join(FLAGS.output_dataset, task.id, "object.obj"))
 
     # Make a json with the task ids and the machine group name.
     with open(os.path.join(FLAGS.output_dataset, "sim_info.json"),
               "w",
               encoding="utf-8") as f:
         dict_to_save = {
-            "task_ids": [task_id.id for _, task_id in obj_path_and_task_ids],
+            "task_ids": [task.id for _, task in obj_path_and_tasks],
             "machine_group": machine_group.name
         }
         json.dump(dict_to_save, f)
