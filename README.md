@@ -59,7 +59,7 @@ expected to contain a pressure array named `p`.
 ## The model
 
 The graph encoding and the model in this repository are inspired by the [MeshGraphNets](https://arxiv.org/abs/2010.03409) paper from DeepMind.
-Notable differences in our implementation are: a single set of edges in the graph encoding, and the use of the model as a single-step predictor.
+Notable differences in our implementation are: a single set of edges in the graph encoding, and the use of the model as a single-step predictor for a static physical property.
 
 Note that the `torch` model can be used freely with any graph data and is not limited to the wind tunel scenario, or even mesh related tasks.
 
