@@ -63,31 +63,6 @@ class FromDiskGeometricDataset(Dataset):
         self.mesh_file_name = mesh_file_name
         self.graph_file_name = graph_file_name
 
-    def convert_mesh_to_graph_data(self) -> None:
-        """Create graph files from the mesh files in the data directory.
-        
-        This method saves each graph file in the same sample directory as
-        its corresponding mesh file. The same file name is used."""
-
-        for i in self.indices():
-            mesh_file_path = self.get_mesh_path(i)
-
-            processed_graph = data_processing.mesh_file_to_graph_data(
-                mesh_file_path, WIND_VECTOR, load_pressure=True)
-
-            processed_file_path = os.path.join(self.get_sample_path(i),
-                                               self.graph_file_name)
-
-            torch.save(processed_graph, processed_file_path)
-
-    def remove_files(self, file_name_to_delete: str) -> None:
-        """Remove the required file in each sample directory."""
-
-        for i in range(self.len()):
-            file_path_to_delete = os.path.join(self.get_sample_path(i),
-                                               file_name_to_delete)
-            os.remove(file_path_to_delete)
-
     def len(self) -> int:
         """Return the number of samples in the dataset."""
         return len(self.samples)
