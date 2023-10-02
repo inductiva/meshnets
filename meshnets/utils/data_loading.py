@@ -4,8 +4,6 @@ from typing import Union
 from typing import Tuple
 
 from absl import logging
-import meshio
-from meshio._mesh import Mesh
 import numpy as np
 import pyvista as pv
 
@@ -53,91 +51,3 @@ def load_edge_mesh_pv(
         if verbose:
             logging.info('Pressure is : %s', None)
         return nodes, edge_list, None
-
-
-def edges_from_meshio_mesh(mesh: Mesh) -> np.ndarray:
-    """Produce an array containing all the edges in a meshio Mesh object.
-    
-    This array can include duplicates."""
-
-    edges_list = []
-    for cell in mesh.cells:
-        cell_faces = cell.data
-        shape_vertices_nb = cell_faces.shape[1]
-
-        for i in range(shape_vertices_nb - 1):
-            edges_list.append(cell_faces[:, i:(i + 2)])
-        if shape_vertices_nb > 2:
-            # Get the edge between the first and last node of the faces
-            edges_list.append(cell_faces[:, ::(shape_vertices_nb - 1)])
-
-        # Easier to understand but runs approximately 10 times slower
-        # for i in range(shape_vertices_nb - 1):
-        #     edges_list.append(cell_faces[:, [i, i + 1]])
-        # if shape_vertices_nb > 2:
-        #     edges_list.append(cell_faces[:, [0, -1]])
-
-    return np.concatenate(edges_list, axis=0)
-
-
-def load_edge_mesh_meshio(
-    obj_path: str,
-    load_pressure: bool = True,
-    verbose: bool = False
-) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
-    """Extract node coordinates, edges and pressure at nodes from a mesh file
-    using meshio.
-    
-    If `load_pressure=False`, the returned pressure will be None.
-
-    Edges can include duplicates. 
-    """
-
-    mesh = meshio.read(obj_path)
-
-    # On some files, meshio returns arrays in big endian byte order
-    # which is not supported by torch. This changes the array to
-    # small endian without modfying the values in it.
-    # Behavior observed on .vtk files
-    nodes = mesh.points
-    if nodes.dtype.byteorder == '>':
-        nodes = nodes.byteswap().newbyteorder('<')
-
-    edges = edges_from_meshio_mesh(mesh)
-
-    if verbose:
-        logging.info('Nodes shape : %s', nodes.shape)
-        logging.info('Edge list shape : %s', edges.shape)
-
-    if load_pressure:
-        # Same behavior as mesh.points
-        pressure = mesh.point_data['p']
-        if pressure.dtype.byteorder == '>':
-            pressure = pressure.byteswap().newbyteorder('<')
-        if verbose:
-            logging.info('Pressure shape : %s', pressure.shape)
-
-        return nodes, edges, pressure
-    else:
-        if verbose:
-            logging.info('Pressure is : %s', None)
-        return nodes, edges, None
-
-
-def load_triangle_mesh(obj_path: str,
-                       verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
-    """Load nodes and cells from a mesh file representing a triangle mesh.
-    
-    This method is deprecated and only works for meshes composed of triangle
-    faces only."""
-
-    mesh = meshio.read(obj_path)
-
-    nodes = mesh.points
-    cells = mesh.cells_dict['triangle']
-
-    if verbose:
-        logging.info('Nodes shape : %s', nodes.shape)
-        logging.info('Cells shape : %s', nodes.shape)
-
-    return nodes, cells
