@@ -5,6 +5,7 @@ from absl import logging
 
 import os
 import json
+import warnings
 
 import inductiva
 
@@ -12,12 +13,6 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string("path_to_sim_info", None,
                     "The path to the simulation json info files.")
-
-flags.DEFINE_string(
-    "download_dir", None,
-    "Where to download the data. If None, the data is not downloaded.")
-
-flags.mark_flag_as_required("download_dir")
 
 
 def main(_):
@@ -38,11 +33,14 @@ def main(_):
     logging.info("Tasks successfully completed: %s",
                  len(tasks_successfully_completed))
 
+    download_dir = os.path.dirname(FLAGS.path_to_sim_info)
     for task in tasks_successfully_completed:
-        save_path = f"{FLAGS.download_dir}_{task.id}"
+        save_path = os.path.join(download_dir, task.id)
         output = task.get_output()
         if not os.path.exists(save_path):
             os.makedirs(save_path)
+            warnings.warn(
+                f"Download task {task.id} for which no directory existed")
         output.get_object_pressure_field(
             save_path=os.path.join(save_path, "pressure_field.vtk"))
 
