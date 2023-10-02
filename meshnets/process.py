@@ -7,7 +7,7 @@ from absl import flags
 
 import torch
 
-import meshnets.utils.data_processing as data_processing
+from meshnets.utils import data_processing
 
 FLAGS = flags.FLAGS
 

@@ -6,8 +6,6 @@ import numpy as np
 import torch
 from torch_geometric.data import Data, Dataset
 
-from meshnets.utils import data_processing
-
 # TODO(victor): the wind vector should be
 # obtained individually for each mesh
 WIND_VECTOR = (10, 0, 0)
