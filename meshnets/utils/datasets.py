@@ -92,9 +92,6 @@ class FromDiskGeometricDataset(Dataset):
         sample_path = self.get_sample_path(idx)
         graph_path = os.path.join(sample_path, self.graph_file_name)
 
-        if not os.path.isfile(graph_path):
-            warnings.warn(f"File '{graph_path}' does not exist.")
-
         return graph_path
 
     def get(self, idx: int) -> Data:
