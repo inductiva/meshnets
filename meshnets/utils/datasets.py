@@ -29,10 +29,6 @@ class FromDiskGeometricDataset(Dataset):
             mesh.vtk
             graph.pt
 
-    Note that the directory, file names, and file extensions can be different.
-    `process_data` allows to produce the graph files upon instantiating the 
-    dataset class from a folder containing only the mesh files.
-
     This class inherits from torch_geometric Dataset and implements its
     abstract methods `len` and `get`. This offers access to the torch_geometric
     Dataset attributes when the .pt files retrieved from disk are
