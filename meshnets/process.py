@@ -6,6 +6,7 @@ from absl import app
 from absl import flags
 
 import torch
+import pyvista as pv
 
 from meshnets.utils import data_processing
 
@@ -13,6 +14,8 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
                     'Path to the folder containing the mesh files.')
+
+flags.DEFINE_float('tolerance', 1.5, 'Tolerance for the mesh sampling.')
 
 # TODO: This will be deprecated soon as we will start training with
 # varying wind speeds. At the moment this is here just for support
@@ -47,13 +50,20 @@ def main(_):
 
     # Convert the .vtk files to graph data.
     for folder in sim_folders:
-        vtk_file_path = os.path.join(folder, 'pressure_field.vtk')
-        graph_data = data_processing.mesh_file_to_graph_data(vtk_file_path,
-                                                             WIND_VECTOR,
-                                                             load_pressure=True)
+        openfoam_mesh_path = os.path.join(folder, 'pressure_field.vtk')
+        original_mesh_path = os.path.join(folder, 'object.obj')
 
-        # TODO: Will add suport here for interpolation to the original
-        # mesh in a future pull request.
+        openfoam_mesh = pv.read(openfoam_mesh_path)
+        original_mesh = pv.read(original_mesh_path)
+
+        interpolated_mesh = original_mesh.sample(openfoam_mesh,
+                                                 tolerance=FLAGS.tolerance)
+        interpolated_mesh_path = os.path.join(
+            folder, 'pressure_field_interpolated.vtk')
+        interpolated_mesh.save(interpolated_mesh_path)
+
+        graph_data = data_processing.mesh_file_to_graph_data(
+            interpolated_mesh_path, WIND_VECTOR, load_pressure=True)
 
         torch.save(graph_data, os.path.join(folder, 'pressure_field.pt'))
 
