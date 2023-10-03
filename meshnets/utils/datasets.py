@@ -48,14 +48,24 @@ class FromDiskGeometricDataset(Dataset):
         super().__init__(*args, **kwargs)
 
         self.root_dir = data_dir
+
+        self.mesh_file_name = mesh_file_name
+        self.graph_file_name = graph_file_name
+
         samples = [
             sample for sample in os.listdir(data_dir)
             if os.path.isdir(os.path.join(self.root_dir, sample))
         ]
-        self.samples = sorted(samples)
 
-        self.mesh_file_name = mesh_file_name
-        self.graph_file_name = graph_file_name
+        # Filter out samples that do not have a `.pt` file.
+        for sample in samples:
+            graph_path = os.path.join(self.root_dir, sample,
+                                      self.graph_file_name)
+            if not os.path.isfile(graph_path):
+                warnings.warn(f"Sample '{sample}' does not have a graph file.")
+                samples.remove(sample)
+
+        self.samples = sorted(samples)
 
     def len(self) -> int:
         """Return the number of samples in the dataset."""
