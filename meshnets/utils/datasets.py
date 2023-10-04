@@ -42,8 +42,8 @@ class FromDiskGeometricDataset(Dataset):
     def __init__(self,
                  data_dir: str,
                  *args,
-                 mesh_file_name: str = 'pressure_field.vtk',
-                 graph_file_name: str = 'pressure_field_interpolated.pt',
+                 mesh_file_name: str = 'pressure_field_interpolated.vtk',
+                 graph_file_name: str = 'pressure_field.pt',
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
