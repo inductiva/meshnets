@@ -75,7 +75,7 @@ def main(_):
         disk_size_gb=FLAGS.disk_size_gb)
     machine_group.start()
 
-    obj_task_velocitiies = []
+    obj_task_velocities = []
     for object_path in object_paths:
         flow_velocity_x = random.uniform(*flow_velocity_range_x)
         flow_velocity_y = random.uniform(*flow_velocity_range_y)
@@ -86,14 +86,14 @@ def main(_):
             x_geometry, y_geometry, z_geometry, FLAGS.num_iterations,
             machine_group)
 
-        obj_task_velocitiies.append(
+        obj_task_velocities.append(
             (object_path, task,
              [flow_velocity_x, flow_velocity_y, flow_velocity_z]))
 
     # Copy the object files to a folder with path
     # FLAGS.output_dataset/task_id. This keeps track of the obj file
     # for the given file.
-    for object_path, task, flow_velocity in obj_task_velocitiies:
+    for object_path, task, flow_velocity in obj_task_velocities:
         os.makedirs(os.path.join(FLAGS.output_dataset, task.id))
         shutil.copy(object_path,
                     os.path.join(FLAGS.output_dataset, task.id, "object.obj"))
@@ -110,7 +110,7 @@ def main(_):
               "w",
               encoding="utf-8") as f:
         dict_to_save = {
-            "task_ids": [task.id for _, task, _ in obj_task_velocitiies],
+            "task_ids": [task.id for _, task, _ in obj_task_velocities],
             "machine_group": machine_group.name
         }
         json.dump(dict_to_save, f)
