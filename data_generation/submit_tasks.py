@@ -14,11 +14,11 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string("input_dataset", None, "Path to the dataset of objects.")
 
-flags.DEFINE_list("flow_velocity_range_x", [30, 50],
+flags.DEFINE_list("flow_velocity_range_x", None,
                   "Range of flow velocity in the x-direction.")
-flags.DEFINE_list("flow_velocity_range_y", [30, 50],
+flags.DEFINE_list("flow_velocity_range_y", None,
                   "Range of flow velocity in the y-direction.")
-flags.DEFINE_list("flow_velocity_range_z", [30, 50],
+flags.DEFINE_list("flow_velocity_range_z", None,
                   "Range of flow velocity in the z-direction.")
 flags.DEFINE_list("x_geometry", [-5, 20], "X geometry of the domain.")
 flags.DEFINE_list("y_geometry", [-5, 5], "Y geometry of the domain.")
@@ -33,6 +33,9 @@ flags.DEFINE_string("output_dataset", None, "Path to the output dataset.")
 
 flags.mark_flag_as_required("input_dataset")
 flags.mark_flag_as_required("output_dataset")
+flags.mark_flag_as_required("flow_velocity_range_x")
+flags.mark_flag_as_required("flow_velocity_range_y")
+flags.mark_flag_as_required("flow_velocity_range_z")
 
 
 def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
