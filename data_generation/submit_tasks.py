@@ -4,8 +4,6 @@ from absl import flags
 from absl import logging
 
 import os
-import signal
-import sys
 import shutil
 import json
 
@@ -57,15 +55,6 @@ def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
     return task
 
 
-def make_machine_group_signal_handler(machine_group):
-
-    def signal_handler(signal, frame):
-        machine_group.terminate()
-        sys.exit(0)
-
-    return signal_handler
-
-
 def main(_):
     object_paths = [
         os.path.join(FLAGS.input_dataset, path)
@@ -87,11 +76,6 @@ def main(_):
             num_machines=FLAGS.num_machines,
             disk_size_gb=FLAGS.disk_size_gb)
         machine_group.start()
-
-        # Make a signal handler to terminate the machine group if the
-        # program is terminated.
-        signal_handler = make_machine_group_signal_handler(machine_group)
-        signal.signal(signal.SIGINT, signal_handler)
 
         obj_task_velocities = []
         for object_path in object_paths:
@@ -134,9 +118,12 @@ def main(_):
             }
             json.dump(dict_to_save, f)
 
+    except KeyboardInterrupt:
+        logging.info("Keyboard interrupt received. Terminating machine group.")
+        machine_group.terminate()
     # pylint: disable=broad-except
     except Exception as e:
-        logging.info("Exception: {}".format(e))
+        logging.error("Error occurred: %s", e)
         machine_group.terminate()
 
 
