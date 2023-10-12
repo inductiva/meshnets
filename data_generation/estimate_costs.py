@@ -90,5 +90,5 @@ def main(_):
     machine_group.terminate()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(main)
