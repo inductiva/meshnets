@@ -1,8 +1,11 @@
 """This file uses the inductiva API to sumbit tasks"""
 from absl import app
 from absl import flags
+from absl import logging
 
 import os
+import signal
+import sys
 import shutil
 import json
 
@@ -54,6 +57,15 @@ def simulate_wind_tunnel_scenario(obj_path, flow_velocity, x_geometry,
     return task
 
 
+def make_machine_group_signal_handler(machine_group):
+
+    def signal_handler(signal, frame):
+        machine_group.terminate()
+        sys.exit(0)
+
+    return signal_handler
+
+
 def main(_):
     object_paths = [
         os.path.join(FLAGS.input_dataset, path)
@@ -68,52 +80,64 @@ def main(_):
     y_geometry = list(map(float, FLAGS.y_geometry))
     z_geometry = list(map(float, FLAGS.z_geometry))
 
-    # Start the machine group with the requested parameters
-    machine_group = inductiva.resources.MachineGroup(
-        machine_type=FLAGS.machine_type,
-        num_machines=FLAGS.num_machines,
-        disk_size_gb=FLAGS.disk_size_gb)
-    machine_group.start()
+    try:
+        # Start the machine group with the requested parameters
+        machine_group = inductiva.resources.MachineGroup(
+            machine_type=FLAGS.machine_type,
+            num_machines=FLAGS.num_machines,
+            disk_size_gb=FLAGS.disk_size_gb)
+        machine_group.start()
 
-    obj_task_velocities = []
-    for object_path in object_paths:
-        flow_velocity_x = random.uniform(*flow_velocity_range_x)
-        flow_velocity_y = random.uniform(*flow_velocity_range_y)
-        flow_velocity_z = random.uniform(*flow_velocity_range_z)
+        # Make a signal handler to terminate the machine group if the
+        # program is terminated.
+        signal_handler = make_machine_group_signal_handler(machine_group)
+        signal.signal(signal.SIGINT, signal_handler)
 
-        task = simulate_wind_tunnel_scenario(
-            object_path, [flow_velocity_x, flow_velocity_y, flow_velocity_z],
-            x_geometry, y_geometry, z_geometry, FLAGS.num_iterations,
-            machine_group)
+        obj_task_velocities = []
+        for object_path in object_paths:
+            flow_velocity_x = random.uniform(*flow_velocity_range_x)
+            flow_velocity_y = random.uniform(*flow_velocity_range_y)
+            flow_velocity_z = random.uniform(*flow_velocity_range_z)
 
-        obj_task_velocities.append(
-            (object_path, task,
-             [flow_velocity_x, flow_velocity_y, flow_velocity_z]))
+            task = simulate_wind_tunnel_scenario(
+                object_path,
+                [flow_velocity_x, flow_velocity_y, flow_velocity_z], x_geometry,
+                y_geometry, z_geometry, FLAGS.num_iterations, machine_group)
 
-    # Copy the object files to a folder with path
-    # FLAGS.output_dataset/task_id. This keeps track of the obj file
-    # for the given file.
-    for object_path, task, flow_velocity in obj_task_velocities:
-        os.makedirs(os.path.join(FLAGS.output_dataset, task.id))
-        shutil.copy(object_path,
-                    os.path.join(FLAGS.output_dataset, task.id, "object.obj"))
+            obj_task_velocities.append(
+                (object_path, task,
+                 [flow_velocity_x, flow_velocity_y, flow_velocity_z]))
 
-        # Save the flow velocity with the simulation.
-        with open(os.path.join(FLAGS.output_dataset, task.id,
-                               "flow_velocity.json"),
+        # Copy the object files to a folder with path
+        # FLAGS.output_dataset/task_id. This keeps track of the obj file
+        # for the given file.
+        for object_path, task, flow_velocity in obj_task_velocities:
+            os.makedirs(os.path.join(FLAGS.output_dataset, task.id))
+            shutil.copy(
+                object_path,
+                os.path.join(FLAGS.output_dataset, task.id, "object.obj"))
+
+            # Save the flow velocity with the simulation.
+            with open(os.path.join(FLAGS.output_dataset, task.id,
+                                   "flow_velocity.json"),
+                      "w",
+                      encoding="utf-8") as f:
+                json.dump(flow_velocity, f)
+
+        # Make a json with the task ids and the machine group name.
+        with open(os.path.join(FLAGS.output_dataset, "sim_info.json"),
                   "w",
                   encoding="utf-8") as f:
-            json.dump(flow_velocity, f)
+            dict_to_save = {
+                "task_ids": [task.id for _, task, _ in obj_task_velocities],
+                "machine_group": machine_group.name
+            }
+            json.dump(dict_to_save, f)
 
-    # Make a json with the task ids and the machine group name.
-    with open(os.path.join(FLAGS.output_dataset, "sim_info.json"),
-              "w",
-              encoding="utf-8") as f:
-        dict_to_save = {
-            "task_ids": [task.id for _, task, _ in obj_task_velocities],
-            "machine_group": machine_group.name
-        }
-        json.dump(dict_to_save, f)
+    # pylint: disable=broad-except
+    except Exception as e:
+        logging.info("Exception: {}".format(e))
+        machine_group.terminate()
 
 
 if __name__ == "__main__":
