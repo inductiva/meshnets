@@ -76,9 +76,10 @@ def main(_):
         # Compute the cost of the simulation
         price_per_hour = machine_group.estimate_cloud_cost()
         duration = task.get_execution_time()
-        logging.info("Simulation duration: %s seconds", duration)
+        # logg simulation time with 3 decimal places
+        logging.info("Simulation duration: %.3f seconds", duration)
         cost = price_per_hour * duration / 3600
-        logging.info("Estimated cost per task: %s", cost)
+        logging.info("Estimated cost per task: %.3f $", cost)
 
     except KeyboardInterrupt:
         logging.info("Keyboard interrupt received. Terminating machine group.")
