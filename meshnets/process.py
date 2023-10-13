@@ -67,6 +67,7 @@ def main(_):
 
         openfoam_mesh = pv.read(openfoam_mesh_path)
         original_mesh = pv.read(original_mesh_path)
+        original_mesh = original_mesh.clean()
 
         interpolated_mesh = original_mesh.sample(openfoam_mesh,
                                                  tolerance=FLAGS.tolerance)
