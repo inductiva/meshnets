@@ -10,7 +10,7 @@ import torch
 import pyvista as pv
 import numpy as np
 
-from meshnets.utils import data_processing
+from meshnets.utils import data_processing, data_loading
 
 FLAGS = flags.FLAGS
 
@@ -26,6 +26,14 @@ flags.DEFINE_string('original_mesh_name', 'object.obj',
                     'Name of the original mesh.')
 flags.DEFINE_string('wind_vector_name', 'flow_velocity.json',
                     'The name of the file containing the wind vector.')
+flags.DEFINE_string('edge_index_name', 'edge_index.npy',
+                    'Name of the edge index file.')
+flags.DEFINE_string('edge_features_name', 'edge_features.npy',
+                    'Name of the edge attribute file.')
+flags.DEFINE_string('node_features_name', 'node_features.npy',
+                    'Name of the node attribute file.')
+flags.DEFINE_string('wind_pressures_name', 'wind_pressures.npy',
+                    'Name of the wind pressures file.')
 flags.DEFINE_string('torch_graph_name', 'pressure_field.pt',
                     'Name of the torch graph.')
 flags.DEFINE_list(
@@ -75,8 +83,11 @@ def main(_):
             folder, FLAGS.interpolated_pressure_field_name)
         interpolated_mesh.save(interpolated_mesh_path)
 
-        edge_index, edge_attr = data_processing.make_edge_index_and_features(
-            interpolated_mesh_path)
+        nodes, edges, pressures = data_loading.load_edge_mesh_pv(
+            interpolated_mesh_path, load_pressure=True)
+
+        edge_index, edge_features =\
+            data_processing.make_edge_index_and_features(nodes, edges)
 
         wind_vector_path = os.path.join(folder, FLAGS.wind_vector_name)
         if os.path.exists(wind_vector_path):
@@ -84,16 +95,15 @@ def main(_):
                 wind_vector = json.load(f)
         else:
             wind_vector = FLAGS.default_wind_vector
-        node_features = data_processing.make_node_features(
-            interpolated_mesh_path, wind_vector)
+        node_features = data_processing.make_node_features(nodes, wind_vector)
 
-        target = data_processing.make_target(interpolated_mesh_path)
+        wind_pressures = np.array(pressures, dtype=np.float32)
 
         # Save as numpy arrays.
-        np.save(os.path.join(folder, 'edge_index.npy'), edge_index)
-        np.save(os.path.join(folder, 'edge_attr.npy'), edge_attr)
-        np.save(os.path.join(folder, 'node_features.npy'), node_features)
-        np.save(os.path.join(folder, 'target.npy'), target)
+        np.save(os.path.join(folder, FLAGS.edge_index_name), edge_index)
+        np.save(os.path.join(folder, FLAGS.edge_features_name), edge_features)
+        np.save(os.path.join(folder, FLAGS.node_features_name), node_features)
+        np.save(os.path.join(folder, FLAGS.wind_pressures_name), wind_pressures)
 
         # TODO(augusto): Remove this in the future. Leaving it here for
         # compatibility with the old code.

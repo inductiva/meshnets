@@ -106,47 +106,34 @@ def mesh_file_to_graph_data(file_path: str,
     return graph
 
 
-def make_node_features(file_path: str,
-                       wind_vector: Tuple[float],
-                       verbose: bool = False) -> np.ndarray:
+def make_node_features(nodes: np.ndarray,
+                       wind_vector: Tuple[float]) -> np.ndarray:
     """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
     a wind vector.
 
     Args:
-        file_path: Path to the mesh file
+        nodes: An array of node coordinates.
         wind_vector: Wind vector
         verbose: Whether to print information about the mesh file
     Returns:
         node_features: Node features for each node of the mesh
     """
-    if verbose:
-        logging.info('Loading mesh data from %s', file_path)
-    nodes, _, _ = data_loading.load_edge_mesh_pv(file_path,
-                                                 load_pressure=False,
-                                                 verbose=verbose)
-
-    # node features for each node are the wind vector
     node_features = np.tile(wind_vector, (len(nodes), 1))
     return node_features
 
 
-def make_edge_index_and_features(file_path: str,
-                                 verbose: bool = False
-                                ) -> Tuple[np.ndarray, np.ndarray]:
+def make_edge_index_and_features(
+        nodes: np.ndarray, edges: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
     a wind vector. Return the edge index and the edge features.
 
     Args:
-        file_path: Path to the mesh file
-        verbose: Whether to print information about the mesh file
+        nodes: An array of node coordinates.
+        edges: An array of edge indices.
     Returns:
         edge_index: Edge index for the mesh
         edge_attr: Edge features for the mesh
     """
-    nodes, edges, _ = data_loading.load_edge_mesh_pv(file_path,
-                                                     load_pressure=False,
-                                                     verbose=verbose)
-
     edge_index = to_undirected(torch.tensor(edges.T, dtype=torch.int64))
 
     src, dst = edge_index
@@ -160,19 +147,3 @@ def make_edge_index_and_features(file_path: str,
 
     edge_attr = np.concatenate([displacement_vector, displacement_norm], axis=1)
     return edge_index.numpy(), edge_attr
-
-
-def make_target(file_path: str, verbose: bool = False) -> np.ndarray:
-    """Receive the path to a mesh file (e.g. `.obj`, `.vtk` file) and
-    a wind vector. Return the edge index and the edge features.
-
-    Args:
-        file_path: Path to the mesh file
-        verbose: Whether to print information about the mesh file
-    Returns:
-        target: Target wind pressures
-    """
-    _, _, pressure = data_loading.load_edge_mesh_pv(file_path,
-                                                    load_pressure=True,
-                                                    verbose=verbose)
-    return np.array(pressure, dtype=np.float32)
