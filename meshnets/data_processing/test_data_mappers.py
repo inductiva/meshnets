@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from .from_hugging_face import to_undirected
+import data_mappers
 
 
 @pytest.mark.parametrize('edges, expected_edges',
@@ -13,7 +13,7 @@ from .from_hugging_face import to_undirected
 def test_to_undirected(edges, expected_edges):
     example = {'edges': edges}
     # Call the function
-    result = to_undirected(example)
+    result = data_mappers.to_undirected(example)
 
     # Check if the edges have been properly modified
     assert np.array_equal(result['edges'], expected_edges)
