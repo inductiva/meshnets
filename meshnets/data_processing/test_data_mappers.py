@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-import data_mappers
+from . import data_mappers
 
 
 @pytest.mark.parametrize('edges, expected_edges',
