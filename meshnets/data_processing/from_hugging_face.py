@@ -1,6 +1,7 @@
 """Function to process data from hugging face datasets to graphs.
 
-This module assumes the data is in the format of the hugging face datasets with the following columns:
+This module assumes the data is in the format of the hugging face
+datasets with the following columns:
 
 - nodes: list of nodes in the graph with shape [n, 3] where 3
   corresponds to the spacial coordinates.
