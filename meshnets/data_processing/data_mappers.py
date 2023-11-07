@@ -54,3 +54,20 @@ def make_edge_features(example):
     example['edge_features'] = np.concatenate(
         [displacement_vectors, distances[:, None]], axis=1)
     return example
+
+
+def make_node_features(example):
+    """Makes the node features from the node coordinates.
+
+    The node features:
+
+    - The wind vector. This is a common value for all the nodes in the
+      graph.
+
+    """
+    nodes = np.array(example['nodes'])
+    wind_pressure = np.array(example['wind_vector'])
+    example['node_features'] = [
+        example['wind_vector'] for _ in range(nodes.shape[0])
+    ]
+    return example
