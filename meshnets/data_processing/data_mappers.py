@@ -19,16 +19,16 @@ datasets with the following columns:
 import numpy as np
 
 
-def to_undirected(example):
+def to_undirected(example, feature_key='edges'):
     """Makes the graph undirected.
 
     This is equivalent to adding the inverse edges to the graph. That
     is, if (i, j) is in the `edges` we also add the edge (j, i).
 
     """
-    edges = np.array(example['edges'])
+    edges = np.array(example[feature_key])
     if edges.size == 0:
         return example
     edges = np.concatenate([edges, edges[:, ::-1]], axis=0)
-    example['edges'] = edges
+    example[feature_key] = edges
     return example
