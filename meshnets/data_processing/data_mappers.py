@@ -32,3 +32,25 @@ def to_undirected(example):
     edges = np.concatenate([edges, edges[:, ::-1]], axis=0)
     example['edges'] = edges
     return example
+
+
+def make_edge_features(example):
+    """Makes the edge features from the node coordinates.
+
+    The edge features:
+
+    - The displacement vector between the source and target nodes.
+    - The distance between the source and target nodes.
+
+    """
+    nodes = np.array(example['nodes'])
+    edges = np.array(example['edges'])
+
+    if edges.size == 0 or nodes.size == 0:
+        example['edge_features'] = []
+        return example
+    displacement_vectors = nodes[edges[:, 1]] - nodes[edges[:, 0]]
+    distances = np.linalg.norm(displacement_vectors, axis=1)
+    example['edge_features'] = np.concatenate(
+        [displacement_vectors, distances[:, None]], axis=1)
+    return example
