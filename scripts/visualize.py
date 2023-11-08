@@ -6,11 +6,8 @@ from absl import flags
 import numpy as np
 import pyvista as pv
 import torch
-from torch.utils.data import random_split
 
-from meshnets.utils.datasets import FromDiskGeometricDataset
-from meshnets.utils import data_visualization
-from meshnets.utils import model_loading
+import meshnets
 
 FLAGS = flags.FLAGS
 
@@ -46,15 +43,14 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
-    dataset = FromDiskGeometricDataset(FLAGS.data_dir)
+    dataset = meshnets.utils.datasets.FromDiskGeometricDataset(FLAGS.data_dir)
     size_dataset = len(dataset)
     num_training = int(FLAGS.train_split * size_dataset)
-    _, validation_dataset = random_split(
+    _, validation_dataset = torch.utils.data.random_split(
         dataset, [num_training, size_dataset - num_training])
 
-    wrapper = model_loading.load_model_from_mlflow(FLAGS.tracking_uri,
-                                                   FLAGS.run_id,
-                                                   FLAGS.checkpoint)
+    wrapper = meshnets.utils.model_loading.load_model_from_mlflow(
+        FLAGS.tracking_uri, FLAGS.run_id, FLAGS.checkpoint)
 
     sample_idx = np.random.choice(validation_dataset.indices)
 
@@ -74,29 +70,32 @@ def main(_):
     if FLAGS.start_xvfb:
         pv.start_xvfb()
 
-    data_visualization.plot_mesh_comparison(mesh_path,
-                                            groundtruth,
-                                            prediction,
-                                            clim=None,
-                                            rotate_z=180,
-                                            off_screen=False,
-                                            screenshot=FLAGS.output_file_path)
+    meshnets.utils.data_visualization.plot_mesh_comparison(
+        mesh_path,
+        groundtruth,
+        prediction,
+        clim=None,
+        rotate_z=180,
+        off_screen=False,
+        screenshot=FLAGS.output_file_path)
 
-    data_visualization.plot_relative_error(mesh_path,
-                                           groundtruth,
-                                           prediction,
-                                           clim=None,
-                                           rotate_z=180,
-                                           off_screen=False,
-                                           screenshot=FLAGS.output_file_path)
+    meshnets.utils.data_visualization.plot_relative_error(
+        mesh_path,
+        groundtruth,
+        prediction,
+        clim=None,
+        rotate_z=180,
+        off_screen=False,
+        screenshot=FLAGS.output_file_path)
 
-    data_visualization.plot_relative_error(mesh_path,
-                                           groundtruth,
-                                           prediction,
-                                           clim=[0, 1],
-                                           rotate_z=180,
-                                           off_screen=False,
-                                           screenshot=FLAGS.output_file_path)
+    meshnets.utils.data_visualization.plot_relative_error(
+        mesh_path,
+        groundtruth,
+        prediction,
+        clim=[0, 1],
+        rotate_z=180,
+        off_screen=False,
+        screenshot=FLAGS.output_file_path)
 
 
 if __name__ == "__main__":
