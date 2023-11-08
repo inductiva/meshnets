@@ -65,8 +65,8 @@ def make_node_features(example):
       graph.
 
     """
-    nodes = np.array(example['nodes'])
+    nodes = example['nodes']
     example['node_features'] = [
-        example['wind_vector'] for _ in range(nodes.shape[0])
+        example['wind_vector'] for _ in range(len(nodes))
     ]
     return example
