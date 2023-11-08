@@ -56,7 +56,7 @@ def make_edge_features(example):
     return example
 
 
-def make_node_features(example):
+def make_node_features(example, feature='wind_vector'):
     """Makes the node features from the node coordinates.
 
     The node features:
@@ -65,8 +65,7 @@ def make_node_features(example):
       graph.
 
     """
-    nodes = example['nodes']
     example['node_features'] = [
-        example['wind_vector'] for _ in range(len(nodes))
+        example[feature] for _ in range(len(example['nodes']))
     ]
     return example
