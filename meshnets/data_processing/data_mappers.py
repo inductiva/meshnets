@@ -66,7 +66,6 @@ def make_node_features(example):
 
     """
     nodes = np.array(example['nodes'])
-    wind_pressure = np.array(example['wind_vector'])
     example['node_features'] = [
         example['wind_vector'] for _ in range(nodes.shape[0])
     ]
