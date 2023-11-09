@@ -6,9 +6,6 @@ torch-scatter
 torch_geometric
 pytorch_lightning==1.6.*
 ray[default]
-ray_lightning
 mlflow
 google-cloud-storage
 gputil
-inductiva
-inductiva[fluids_extra]

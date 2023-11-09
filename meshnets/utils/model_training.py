@@ -8,8 +8,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch_geometric.loader import DataLoader
 
 import ray
-from ray_lightning import RayStrategy
-from ray.tune.integration.pytorch_lightning import TuneReportCallback
+import ray.train.lightning
 
 from meshnets.modules.lightning_wrapper import MGNLightningWrapper
 from meshnets.modules.model import MeshGraphNet
@@ -19,21 +18,13 @@ from meshnets.utils.callbacks import GradientNorm
 from meshnets.utils.callbacks import MLFlowLoggerFinalizeCheckpointer
 
 
-def train_model(config, experiment_config, train_dataset,
-                validation_datasets_names, validation_datasets):
+def train_model(config):
     """Train the MeshGraphNet model given the training config, experiment config
     and datasets.
-    
-    `config` contains parameters that can impact the training results and should
-     be tuned.
-    
-    `experiment_config` contains parameters defining the experiment logging and
-    the computing ressources to use.
-    
-    This method allows to run standard training with a Ray strategy, or to run
-    Ray tuning. The mode indicated by `experiment_config['tuning_run']`. In the
-    case of tuning, no strategy is adopted and the computating ressources for
-    tuning are defined outside of the method."""
+    """
+    train_dataset = config['train_dataset']
+    validation_datasets = config['validation_datasets']
+    validation_datasets_names = config['validation_datasets_names']
 
     # Config access
     # Dataloader config
@@ -47,22 +38,15 @@ def train_model(config, experiment_config, train_dataset,
 
     # Experiment config access
     # MLFlow config
-    experiment_name = experiment_config['experiment_name']
+    experiment_name = config['experiment_name']
     # Dataloader config
-    num_workers_loader = experiment_config['num_workers_loader']
-
-    # Ray config
-    tuning_run = experiment_config['tuning_run']
-    use_gpu = experiment_config['use_gpu']
-    if not tuning_run:
-        num_workers_ray = experiment_config['num_workers_ray']
-        num_cpus_per_worker = experiment_config['num_cpus_per_worker']
+    num_workers_loader = config['num_workers_loader']
 
     # Trainer config
-    max_epochs = experiment_config['max_epochs']
-    log_every_n_steps = experiment_config['log_every_n_steps']
+    max_epochs = config['max_epochs']
+    log_every_n_steps = config['log_every_n_steps']
     # Checkpoint config
-    save_top_k = experiment_config['save_top_k']
+    save_top_k = config['save_top_k']
 
     # Compute the training dataset stats for normalization
     train_stats = train_dataset.dataset[train_dataset.indices].get_stats()
@@ -84,7 +68,8 @@ def train_model(config, experiment_config, train_dataset,
                        persistent_workers=True,
                        shuffle=False))
 
-    # Define the wrapper and the model
+    train_dataset_name = validation_datasets_names[0]
+
     lightning_wrapper = MGNLightningWrapper(
         MeshGraphNet,
         node_features_size=train_dataset.dataset.num_node_features,
@@ -102,14 +87,12 @@ def train_model(config, experiment_config, train_dataset,
         validation_datasets_names=validation_datasets_names,
         learning_rate=learning_rate)
 
-    train_dataset_name = validation_datasets_names[0]
-    num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
-
     # The logger creates a new MLFlow run automatically
     # Checkpoints are logged as artifacts at the end of training
     mlf_logger = MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
 
+    num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({
         'train_dataset_name': train_dataset_name,
@@ -136,27 +119,14 @@ def train_model(config, experiment_config, train_dataset,
     batch_size_callback = GeometricBatchSize(log_freq=log_every_n_steps)
     callbacks.append(batch_size_callback)
 
-    # If this is not a tuning run we launch ray and define a ray strategy
-    if not tuning_run:
-        ray.init()
-        strategy = RayStrategy(num_workers=num_workers_ray,
-                               num_cpus_per_worker=num_cpus_per_worker,
-                               use_gpu=use_gpu)
-        accelerator = None
-    # Otherwise we add the TuneReportCallback and define no strategy
-    else:
-        tune_report_callback = TuneReportCallback(['val_loss'],
-                                                  on='validation_end')
-        callbacks.append(tune_report_callback)
-        strategy = None
-        accelerator = 'gpu' if use_gpu else 'cpu'
+    trainer = pl.Trainer(
+        max_epochs=max_epochs,
+        devices='auto',
+        accelerator='auto',
+        strategy=ray.train.lightning.RayDDPStrategy(),
+        plugins=[ray.train.lightning.RayLightningEnvironment()],
+        callbacks=[ray.train.lightning.RayTrainReportCallback()],
+    )
 
-    # Instanciate a Lightning trainer with logger, callbacks and strategy
-    trainer = pl.Trainer(logger=mlf_logger,
-                         callbacks=callbacks,
-                         strategy=strategy,
-                         max_epochs=max_epochs,
-                         log_every_n_steps=log_every_n_steps,
-                         accelerator=accelerator)
-
+    trainer = ray.train.lightning.prepare_trainer(trainer)
     trainer.fit(lightning_wrapper, train_loader, validation_loaders)
