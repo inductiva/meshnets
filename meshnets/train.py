@@ -9,6 +9,8 @@ from torch.utils.data import random_split
 
 from meshnets.utils import model_training
 from meshnets.utils.datasets import FromDiskGeometricDataset
+from ray.train.torch import TorchTrainer
+from ray.train import ScalingConfig
 
 TUNING_RUN = False
 FLAGS = flags.FLAGS
@@ -91,25 +93,29 @@ def main(_):
         'latent_size': FLAGS.latent_size,
         'num_mlp_layers': FLAGS.num_mlp_layers,
         'message_passing_steps': FLAGS.message_passing_steps,
-        'learning_rate': FLAGS.learning_rate
-    }
-    experiment_config = {
+        'learning_rate': FLAGS.learning_rate,
         'experiment_name': FLAGS.experiment_name,
         'num_workers_loader': FLAGS.num_workers_loader,
-        'tuning_run': TUNING_RUN,
-        'num_workers_ray': FLAGS.num_workers_ray,
-        'num_cpus_per_worker': FLAGS.num_cpus_per_worker,
-        'use_gpu': FLAGS.use_gpu,
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
+        'train_dataset': train_dataset,
+        'validation_datasets_names': val_datasets_names,
+        'validation_datasets': val_datasets
     }
 
-    model_training.train_model(config,
-                               experiment_config,
-                               train_dataset,
-                               validation_datasets_names=val_datasets_names,
-                               validation_datasets=val_datasets)
+    resources_per_worker = {
+        'CPU': FLAGS.num_cpus_per_worker,
+        'GPU': 1 if FLAGS.use_gpu else 0
+    }
+    scaling_config = ScalingConfig(num_workers=FLAGS.num_workers_ray,
+                                   use_gpu=FLAGS.use_gpu,
+                                   resources_per_worker=resources_per_worker)
+
+    trainer = TorchTrainer(model_training.train_model,
+                           scaling_config=scaling_config,
+                           train_loop_config=config)
+    trainer.fit()
 
 
 if __name__ == '__main__':

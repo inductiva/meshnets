@@ -5,8 +5,12 @@ import os
 from absl import app
 from absl import flags
 import mlflow
-import ray
+
 from ray import tune
+from ray.train.torch import TorchTrainer
+from ray.train import ScalingConfig
+from ray.tune.schedulers import ASHAScheduler
+
 import torch
 from torch.utils.data import random_split
 
@@ -92,53 +96,58 @@ def main(_):
         val_datasets.append(validation_dataset)
 
     # Define the search space over which `tune` will run.
-    config = {
+    search_space = {
         'batch_size':
             tune.grid_search(list(map(int, FLAGS.batch_size))),
         'latent_size':
             tune.grid_search(list(map(int, FLAGS.latent_size))),
         'num_mlp_layers':
             tune.grid_search(list(map(int, FLAGS.num_mlp_layers))),
-        'message_passing_steps':
-            tune.grid_search(list(map(int, FLAGS.message_passing_steps))),
         'learning_rate':
-            tune.grid_search(list(map(float, FLAGS.learning_rate)))
+            tune.grid_search(list(map(float, FLAGS.learning_rate))),
+        'message_passing_steps':
+            tune.grid_search(list(map(int, FLAGS.message_passing_steps)))
     }
 
-    experiment_config = {
-        'experiment_name': FLAGS.experiment_name,
+    config = {
         'num_workers_loader': FLAGS.num_workers_loader,
-        'tuning_run': TUNING_RUN,
-        # The two following parameters are unused in tuning regime
-        'num_workers_ray': None,
-        'num_cpus_per_worker': None,
-        'use_gpu': bool(FLAGS.num_gpus_per_worker),
+        'experiment_name': FLAGS.experiment_name,
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
+        'train_dataset': train_dataset,
+        'validation_datasets_names': val_datasets_names,
+        'validation_datasets': val_datasets
     }
 
+    mlflow.create_experiment(FLAGS.experiment_name)
+
     # Alocate resources per trial.
-    resources_per_trial = {
+    resources_per_worker = {
         'cpu': FLAGS.num_cpus_per_worker,
         'gpu': FLAGS.num_gpus_per_worker
     }
 
-    # Create the experiment to avoid its duplicated creation by Ray workers
-    mlflow.create_experiment(FLAGS.experiment_name)
+    scaling_config = ScalingConfig(num_workers=FLAGS.num_workers_ray,
+                                   resources_per_worker=resources_per_worker)
 
-    trainable = tune.with_parameters(
-        model_training.train_model,
-        experiment_config=experiment_config,
-        train_dataset=train_dataset,
-        validation_datasets_names=val_datasets_names,
-        validation_datasets=val_datasets)
+    trainer = TorchTrainer(model_training.train_model,
+                           scaling_config=scaling_config,
+                           train_loop_config=config)
 
-    ray.init()
-    tune.run(trainable,
-             config=config,
-             num_samples=1,
-             resources_per_trial=resources_per_trial)
+    scheduler = ASHAScheduler()
+
+    tuner = tune.Tuner(
+        trainer,
+        param_space={'train_loop_config': search_space},
+        tune_config=tune.TuneConfig(
+            metric='val_loss',
+            mode='min',
+            num_samples=1,
+            scheduler=scheduler,
+        ),
+    )
+    tuner.fit()
 
 
 if __name__ == '__main__':
