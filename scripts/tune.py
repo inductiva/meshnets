@@ -121,13 +121,13 @@ def main(_):
     mlflow.create_experiment(FLAGS.experiment_name)
 
     # Alocate resources per trial.
-    resources_per_worker = {
+    resources_per_trial = {
         'cpu': FLAGS.num_cpus_per_worker,
         'gpu': FLAGS.num_gpus_per_worker
     }
 
     scaling_config = ScalingConfig(num_workers=FLAGS.num_workers_ray,
-                                   resources_per_worker=resources_per_worker)
+                                   resources_per_worker=resources_per_trial)
 
     trainer = TorchTrainer(meshnets.utils.model_training.train_model,
                            scaling_config=scaling_config,
