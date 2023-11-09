@@ -5,10 +5,8 @@ import os
 from absl import app
 from absl import flags
 import torch
-from torch.utils.data import random_split
 
-from meshnets.utils import model_training
-from meshnets.utils.datasets import FromDiskGeometricDataset
+import meshnets
 
 TUNING_RUN = False
 FLAGS = flags.FLAGS
@@ -70,8 +68,8 @@ def main(_):
         torch.manual_seed(random_seed)
 
     dataset_name = os.path.basename(FLAGS.data_dir)
-    dataset = FromDiskGeometricDataset(FLAGS.data_dir)
-    train_dataset, validation_dataset = random_split(
+    dataset = meshnets.utils.datasets.FromDiskGeometricDataset(FLAGS.data_dir)
+    train_dataset, validation_dataset = torch.utils.data.random_split(
         dataset, [FLAGS.train_split, FLAGS.validation_split])
 
     val_datasets_names = [dataset_name]
@@ -79,8 +77,8 @@ def main(_):
 
     for val_data_dir in FLAGS.val_data_dirs:
         dataset_name = os.path.basename(val_data_dir)
-        dataset = FromDiskGeometricDataset(val_data_dir)
-        _, validation_dataset = random_split(
+        dataset = meshnets.utils.datasets.FromDiskGeometricDataset(val_data_dir)
+        _, validation_dataset = torch.utils.data.random_split(
             dataset, [FLAGS.train_split, FLAGS.validation_split])
 
         val_datasets_names.append(dataset_name)
@@ -105,11 +103,12 @@ def main(_):
         'save_top_k': FLAGS.save_top_k,
     }
 
-    model_training.train_model(config,
-                               experiment_config,
-                               train_dataset,
-                               validation_datasets_names=val_datasets_names,
-                               validation_datasets=val_datasets)
+    meshnets.utils.model_training.train_model(
+        config,
+        experiment_config,
+        train_dataset,
+        validation_datasets_names=val_datasets_names,
+        validation_datasets=val_datasets)
 
 
 if __name__ == '__main__':
