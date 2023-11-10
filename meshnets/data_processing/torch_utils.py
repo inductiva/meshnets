@@ -22,7 +22,7 @@ def dict_to_geometric_data(examples,
         'wind_pressures'.
 
     Returns:
-        torch_geometric.data.Batch: Batch object containing the
+        torch_geometric.data.Batch: Batch object containing the graphs
 
     This assumes examples have the structure:
     {
@@ -51,7 +51,6 @@ def dict_to_geometric_data(examples,
     ...                     collate_fn=dict_to_geometric_data_collate)
     >>> for batch in loader:
     ...     print(batch)
-    
 
     """
     graphs = [
