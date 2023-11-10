@@ -3,11 +3,11 @@ import torch
 import torch_geometric
 
 
-def collate_fn(examples,
-               x_key='node_features',
-               edge_index_key='edges',
-               edge_attr_key='edge_features',
-               y_key='wind_pressures'):
+def dict_to_geometric_data(examples,
+                           x_key='node_features',
+                           edge_index_key='edges',
+                           edge_attr_key='edge_features',
+                           y_key='wind_pressures'):
     """Collate function for pytorch dataloader
 
     Args:
@@ -20,6 +20,9 @@ def collate_fn(examples,
         features. Defaults to 'edge_features'.
         y_key (str, optional): Key for the target values. Defaults to
         'wind_pressures'.
+
+    Returns:
+        torch_geometric.data.Batch: Batch object containing the
 
     This assumes examples have the structure:
     {
@@ -37,6 +40,18 @@ def collate_fn(examples,
 
     The function wraps the examples in a torch_geometric.data.Data
     object and returns a torch_geometric.data.Batch object.
+
+    python code usage:
+    >>> from torch_geometric.data import DataLoader
+    >>> from torch_geometric.data import Batch
+    >>> from torch_utils import dict_to_geometric_data
+    >>> dataset[0].keys()
+    dict_keys(['node_features', 'edges', 'edge_features', 'wind_pressures'])
+    >>> loader = DataLoader(dataset, batch_size=32,
+    ...                     collate_fn=dict_to_geometric_data_collate)
+    >>> for batch in loader:
+    ...     print(batch)
+    
 
     """
     graphs = [
