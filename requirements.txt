@@ -9,3 +9,4 @@ ray[default]
 mlflow
 google-cloud-storage
 gputil
+datasets
