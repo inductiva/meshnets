@@ -7,18 +7,14 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
 
+import datasets
+
 import ray
 import ray.train.lightning
 
-from meshnets.modules.lightning_wrapper import MGNLightningWrapper
-from meshnets.modules.model import MeshGraphNet
-from meshnets.utils.callbacks import GeometricBatchSize
-from meshnets.utils.callbacks import GPUUsage
-from meshnets.utils.callbacks import GradientNorm
-from meshnets.utils.callbacks import MLFlowLoggerFinalizeCheckpointer
-
-import meshnets
-import datasets
+from .. import modules
+from .. import data_processing
+from . import callbacks
 
 
 def get_node_feature_size(dataloader):
@@ -75,15 +71,14 @@ def train_model(config):
                                           version=dataset_version,
                                           split='train')
     train_dataset = (train_dataset.map(
-        lambda x: meshnets.data_processing.data_mappers.to_undirected(
-            x, 'edges')).map(
-                meshnets.data_processing.data_mappers.make_edge_features).map(
-                    lambda x: meshnets.data_processing.data_mappers.
-                    make_node_features(x, 'wind_vector')))
+        lambda x: data_processing.data_mappers.to_undirected(x, 'edges')).map(
+            data_processing.data_mappers.make_edge_features).map(
+                lambda x: data_processing.data_mappers.make_node_features(
+                    x, 'wind_vector')))
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        collate_fn=meshnets.data_processing.torch_utils.dict_to_geometric_data,
+        collate_fn=data_processing.torch_utils.dict_to_geometric_data,
         batch_size=batch_size,
         num_workers=num_workers_loader,
         shuffle=True)
@@ -93,12 +88,12 @@ def train_model(config):
         val_dataset = datasets.load_dataset('inductiva/wind_tunnel',
                                             version=val_dataset_version,
                                             split='train')
-        val_dataset = (val_dataset.map(
-            lambda x: meshnets.data_processing.data_mappers.
-            to_undirected(x, 'edges')).map(
-                meshnets.data_processing.data_mappers.make_edge_features).map(
-                    lambda x: meshnets.data_processing.data_mappers.
-                    make_node_features(x, 'wind_vector')))
+        val_dataset = (
+            val_dataset.map(lambda x: data_processing.data_mappers.
+                            to_undirected(x, 'edges')).map(
+                                data_processing.data_mappers.make_edge_features
+                            ).map(lambda x: data_processing.data_mappers.
+                                  make_node_features(x, 'wind_vector')))
 
         validation_loaders.append(
             torch.utils.data.DataLoader(val_dataset,
@@ -122,8 +117,8 @@ def train_model(config):
         'y_std': torch.tensor([1.])
     }
 
-    lightning_wrapper = MGNLightningWrapper(
-        MeshGraphNet,
+    model = modules.lightning_wrapper.MGNLightningWrapper(
+        modules.model.MeshGraphNet,
         node_features_size=node_feature_size,
         edge_features_size=edge_feature_size,
         output_size=output_size,
@@ -141,10 +136,10 @@ def train_model(config):
 
     # The logger creates a new MLFlow run automatically
     # Checkpoints are logged as artifacts at the end of training
-    mlf_logger = MLFlowLoggerFinalizeCheckpointer(
+    mlf_logger = callbacks.MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
 
-    num_params = sum(p.numel() for p in lightning_wrapper.model.parameters())
+    num_params = sum(p.numel() for p in model.model.parameters())
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({
         'train_dataset_name': dataset_version,
@@ -152,7 +147,7 @@ def train_model(config):
         'num_params': num_params
     })
 
-    callbacks = []
+    all_callbacks = []
     monitor_metric = f'val_loss_{dataset_version}'
     # Add a suffix following lightning logging behavior
     suffix = '' if len(val_dataset_versions) == 1 else '/dataloader_idx_0'
@@ -160,25 +155,27 @@ def train_model(config):
     # Save checkpoints locally in the mlflow folder
     checkpoint_callback = ModelCheckpoint(monitor=monitor_metric + suffix,
                                           save_top_k=save_top_k)
-    callbacks.append(checkpoint_callback)
+    all_callbacks.append(checkpoint_callback)
 
-    gpu_callback = GPUUsage(log_freq=log_every_n_steps)
-    callbacks.append(gpu_callback)
+    gpu_callback = callbacks.GPUUsage(log_freq=log_every_n_steps)
+    all_callbacks.append(gpu_callback)
 
-    gradient_callback = GradientNorm(log_freq=log_every_n_steps)
-    callbacks.append(gradient_callback)
+    gradient_callback = callbacks.GradientNorm(log_freq=log_every_n_steps)
+    all_callbacks.append(gradient_callback)
 
-    batch_size_callback = GeometricBatchSize(log_freq=log_every_n_steps)
-    callbacks.append(batch_size_callback)
+    batch_size_callback = callbacks.GeometricBatchSize(
+        log_freq=log_every_n_steps)
+    all_callbacks.append(batch_size_callback)
 
+    all_callbacks.append(ray.train.lightning.RayTrainReportCallback())
     trainer = pl.Trainer(
         max_epochs=max_epochs,
         devices='auto',
         accelerator='auto',
         strategy=ray.train.lightning.RayDDPStrategy(),
         plugins=[ray.train.lightning.RayLightningEnvironment()],
-        callbacks=[ray.train.lightning.RayTrainReportCallback()],
+        callbacks=all_callbacks,
     )
 
     trainer = ray.train.lightning.prepare_trainer(trainer)
-    trainer.fit(lightning_wrapper, train_loader, validation_loaders)
+    trainer.fit(model, train_loader, validation_loaders)
