@@ -70,11 +70,12 @@ def train_model(config):
     train_dataset = datasets.load_dataset('inductiva/wind_tunnel',
                                           version=dataset_version,
                                           split='train')
-    train_dataset = (train_dataset.map(
-        lambda x: data_processing.data_mappers.to_undirected(x, 'edges')).map(
-            data_processing.data_mappers.make_edge_features).map(
-                lambda x: data_processing.data_mappers.make_node_features(
-                    x, 'wind_vector')))
+    train_dataset = train_dataset.map(
+        lambda x: data_processing.data_mappers.to_undirected(x, 'edges'))
+    train_dataset = train_dataset.map(
+        data_processing.data_mappers.make_edge_features)
+    train_dataset = train_dataset.map(lambda x: data_processing.data_mappers.
+                                      make_node_features(x, 'wind_vector'))
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -88,12 +89,12 @@ def train_model(config):
         val_dataset = datasets.load_dataset('inductiva/wind_tunnel',
                                             version=val_dataset_version,
                                             split='train')
-        val_dataset = (
-            val_dataset.map(lambda x: data_processing.data_mappers.
-                            to_undirected(x, 'edges')).map(
-                                data_processing.data_mappers.make_edge_features
-                            ).map(lambda x: data_processing.data_mappers.
-                                  make_node_features(x, 'wind_vector')))
+        val_dataset = val_dataset.map(
+            lambda x: data_processing.data_mappers.to_undirected(x, 'edges'))
+        val_dataset = val_dataset.map(
+            data_processing.data_mappers.make_edge_features)
+        val_dataset = val_dataset.map(lambda x: data_processing.data_mappers.
+                                      make_node_features(x, 'wind_vector'))
 
         validation_loaders.append(
             torch.utils.data.DataLoader(val_dataset,
