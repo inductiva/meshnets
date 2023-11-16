@@ -12,9 +12,10 @@ import datasets
 import ray
 import ray.train.lightning
 
-from .. import modules
-from .. import data_processing
 from . import callbacks
+
+from meshnets import modules
+from meshnets import data_processing
 
 
 def get_node_feature_size(dataloader):
