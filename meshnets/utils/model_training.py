@@ -12,8 +12,7 @@ import datasets
 import ray
 import ray.train.lightning
 
-from . import callbacks
-
+from meshnets.utils import callbacks
 from meshnets import modules
 from meshnets import data_processing
 
