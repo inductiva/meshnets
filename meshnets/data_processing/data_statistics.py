@@ -3,7 +3,7 @@ import numpy as np
 
 
 class OnlineStatistics:
-    """Computes mean ad standart deviation from streaming data
+    """Computes mean ad standard deviation from streaming data
 
     Args:
       axis: Axis over which to compute. Default is None, which means
@@ -45,13 +45,13 @@ class OnlineStatistics:
 
     def update(self, example):
         data_point = np.expand_dims(example, 0)
+        self.sum_element = np.sum(data_point, axis=self.axis, keepdims=True)
+        self.sum_element_2 = np.sum(data_point**2,
+                                    axis=self.axis,
+                                    keepdims=True)
         if self.cumulative_sum is None:
-            self.cumulative_sum = np.sum(data_point,
-                                         axis=self.axis,
-                                         keepdims=True)
-            self.cumulative_sum_2 = np.sum(data_point**2,
-                                           axis=self.axis,
-                                           keepdims=True)
+            self.cumulative_sum = self.sum_element
+            self.cumulative_sum_2 = self.sum_element_2
         else:
             sum_element = np.sum(data_point, axis=self.axis, keepdims=True)
             sum_element_2 = np.sum(data_point**2, axis=self.axis, keepdims=True)
