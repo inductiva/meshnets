@@ -1,7 +1,4 @@
 """The main file for model training."""
-
-import os
-
 from absl import app
 from absl import flags
 import mlflow
@@ -22,11 +19,12 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('random_seed', 21,
                      'The seed to initialize the random number generator.')
 
-# Processed data path
-flags.DEFINE_string('data_dir', os.path.join('data', 'dataset'),
-                    'Path to the folder for the processed data files.')
+flags.DEFINE_string('dataset_version', None,
+                    'The dataset version to be used by hugging face.')
+
 flags.DEFINE_multi_string(
-    'val_data_dirs', [], 'Paths to the folders for the validation data files.')
+    'val_dataset_versions', [],
+    'The dataset versions to be used by hugging face for validation.')
 
 # Dataset splits path
 flags.DEFINE_float('train_split', 0.9,
@@ -76,23 +74,6 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
-    dataset_name = os.path.basename(FLAGS.data_dir)
-    dataset = meshnets.utils.datasets.FromDiskGeometricDataset(FLAGS.data_dir)
-    train_dataset, validation_dataset = torch.utils.data.random_split(
-        dataset, [FLAGS.train_split, FLAGS.validation_split])
-
-    val_datasets_names = [dataset_name]
-    val_datasets = [validation_dataset]
-
-    for val_data_dir in FLAGS.val_data_dirs:
-        dataset_name = os.path.basename(val_data_dir)
-        dataset = meshnets.utils.datasets.FromDiskGeometricDataset(val_data_dir)
-        _, validation_dataset = torch.utils.data.random_split(
-            dataset, [FLAGS.train_split, FLAGS.validation_split])
-
-        val_datasets_names.append(dataset_name)
-        val_datasets.append(validation_dataset)
-
     # Define the search space over which `tune` will run.
     search_space = {
         'batch_size':
@@ -108,14 +89,13 @@ def main(_):
     }
 
     config = {
+        'dataset_version': FLAGS.dataset_version,
+        'val_dataset_versions': FLAGS.val_dataset_versions,
         'num_workers_loader': FLAGS.num_workers_loader,
         'experiment_name': FLAGS.experiment_name,
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
-        'train_dataset': train_dataset,
-        'validation_datasets_names': val_datasets_names,
-        'validation_datasets': val_datasets
     }
 
     mlflow.create_experiment(FLAGS.experiment_name)
