@@ -3,7 +3,7 @@ import numpy as np
 
 
 class OnlineStatistics:
-    """Computes mean ad standard deviation from streaming data
+    """Computes mean and standard deviation from streaming data
 
     Args:
       axis: Axis over which to compute. Default is None, which means
@@ -33,6 +33,7 @@ class OnlineStatistics:
     array([[1.5], [3.5]])
     >>> stats.get_std()
     array([[0.5], [0.5]])
+
     """
 
     def __init__(self, axis=None):
@@ -41,28 +42,26 @@ class OnlineStatistics:
         self.n = None
         self.cumulative_sum = None
 
-        self.cumulative_sum_2 = None
+        self.cumulative_sum_squared = None
 
     def update(self, example):
         data_point = np.expand_dims(example, 0)
-        self.sum_element = np.sum(data_point, axis=self.axis, keepdims=True)
-        self.sum_element_2 = np.sum(data_point**2,
-                                    axis=self.axis,
-                                    keepdims=True)
+        sum_element = np.sum(data_point, axis=self.axis, keepdims=True)
+        sum_element_squared = np.sum(data_point**2,
+                                     axis=self.axis,
+                                     keepdims=True)
         if self.cumulative_sum is None:
-            self.cumulative_sum = self.sum_element
-            self.cumulative_sum_2 = self.sum_element_2
+            self.cumulative_sum = sum_element
+            self.cumulative_sum_squared = sum_element_squared
         else:
-            sum_element = np.sum(data_point, axis=self.axis, keepdims=True)
-            sum_element_2 = np.sum(data_point**2, axis=self.axis, keepdims=True)
             self.cumulative_sum = np.sum(np.concatenate(
                 (self.cumulative_sum, sum_element)),
                                          axis=self.axis,
                                          keepdims=True)
-            self.cumulative_sum_2 = np.sum(np.concatenate(
-                (self.cumulative_sum_2, sum_element_2)),
-                                           axis=self.axis,
-                                           keepdims=True)
+            self.cumulative_sum_squared = np.sum(np.concatenate(
+                (self.cumulative_sum_squared, sum_element_squared)),
+                                                 axis=self.axis,
+                                                 keepdims=True)
         n = np.sum(np.ones_like(data_point), axis=self.axis, keepdims=True)
         if self.n is None:
             self.n = n
@@ -75,5 +74,5 @@ class OnlineStatistics:
         return self.cumulative_sum / self.n
 
     def get_std(self):
-        return np.sqrt(self.cumulative_sum_2 * self.n -
+        return np.sqrt(self.cumulative_sum_squared * self.n -
                        self.cumulative_sum**2) / self.n
