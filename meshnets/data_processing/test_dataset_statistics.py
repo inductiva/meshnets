@@ -75,10 +75,10 @@ def test_mean_and_std(dataset, expected_mean, expected_std, axis):
         assert np.allclose(mean, expected_mean[a])
         assert np.allclose(std, expected_std[a])
 
-        # dataset_with_iter = DatasetWithIter(dataset)
-        # mean, std = _compute_mean_and_std(dataset_with_iter, a)
-        # assert np.allclose(mean, expected_mean[a])
-        # assert np.allclose(std, expected_std[a])
+        dataset_with_iter = DatasetWithIter(dataset)
+        mean, std = _compute_mean_and_std(dataset_with_iter, a)
+        assert np.allclose(mean, expected_mean[a])
+        assert np.allclose(std, expected_std[a])
 
 
 def _compute_mean_and_std(dataset, axis):
