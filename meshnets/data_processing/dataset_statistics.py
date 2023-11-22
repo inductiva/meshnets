@@ -28,7 +28,7 @@ def make_iterator(dataset, key, axis, max_iterations):
             array = np.array(dataset[i][key])
             yield from _yield_array(array, axis)
     else:
-        raise ValueError("Dataset must be iterable or sized")
+        raise ValueError('Dataset must be iterable or sized')
 
 
 def compute_mean_and_std(dataset, key, axis, max_iterations=100):

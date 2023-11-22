@@ -1,5 +1,5 @@
+"""Test file"""
 import pytest
-
 import numpy as np
 
 from . import dataset_statistics
@@ -58,7 +58,7 @@ expected_std_for_dataset_with_diff_shapes = {
 
 
 @pytest.mark.parametrize(
-    "dataset,expected_mean,expected_std,axis",
+    'dataset,expected_mean,expected_std,axis',
     [(dataset_with_diff_shapes, expected_mean_for_dataset_with_diff_shapes,
       expected_std_for_dataset_with_diff_shapes, [None]),
      (dataset_1, expected_mean_for_dataset_1, expected_std_for_dataset_1,

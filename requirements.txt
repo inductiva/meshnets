@@ -10,3 +10,4 @@ mlflow
 google-cloud-storage
 gputil
 datasets
+npstreams
