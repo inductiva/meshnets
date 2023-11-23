@@ -1,6 +1,4 @@
 """File to compute dataset statistics"""
-import collections.abc
-
 import numpy as np
 import npstreams
 
