@@ -15,20 +15,11 @@ def _yield_array(array, axis):
 
 def make_iterator(dataset, key, axis, max_iterations):
     """Make iterator over dataset"""
-    if isinstance(dataset, collections.abc.Iterable):
-        for i, example in enumerate(dataset):
-            if i >= max_iterations:
-                break
-            array = np.array(example[key])
-            yield from _yield_array(array, axis)
-    elif isinstance(dataset, collections.abc.Sized):
-        for i in range(len(dataset)):
-            if i >= max_iterations:
-                break
-            array = np.array(dataset[i][key])
-            yield from _yield_array(array, axis)
-    else:
-        raise ValueError('Dataset must be iterable or sized')
+    for i, example in enumerate(dataset):
+        if i >= max_iterations:
+            break
+        array = np.array(example[key])
+        yield from _yield_array(array, axis)
 
 
 def compute_mean_and_std(dataset, key, axis, max_iterations=100):
