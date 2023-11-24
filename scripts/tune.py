@@ -63,6 +63,10 @@ flags.DEFINE_float(
     'num_gpus_per_worker', 0.5,
     'The number of gpus for each worker. If set to zero, GPUs are not used.')
 
+flags.DEFINE_integer(
+    'num_examples_dataset_stats', 1000,
+    'Number of examples in the dataset to use for statistics.')
+
 # Trainer flags
 flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
 flags.DEFINE_integer('log_every_n_steps', 75, 'How often to log within steps.')
@@ -96,6 +100,7 @@ def main(_):
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
+        'num_examples_dataset_stats': FLAGS.num_examples_dataset_stats
     }
 
     mlflow.create_experiment(FLAGS.experiment_name)

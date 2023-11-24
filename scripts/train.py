@@ -57,6 +57,10 @@ flags.DEFINE_integer('num_cpus_per_worker', 24,
                      'The number of cpus for each worker.')
 flags.DEFINE_bool('use_gpu', True, 'Whether to use gpu or not.')
 
+flags.DEFINE_integer(
+    'num_examples_dataset_stats', 1000,
+    'Number of examples in the dataset to use for statistics.')
+
 # Trainer flags
 flags.DEFINE_integer('max_epochs', 150, 'The number of epochs.')
 flags.DEFINE_integer('log_every_n_steps', 75, 'How often to log within steps.')
@@ -82,7 +86,8 @@ def main(_):
         'num_workers_loader': FLAGS.num_workers_loader,
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
-        'save_top_k': FLAGS.save_top_k
+        'save_top_k': FLAGS.save_top_k,
+        'num_examples_dataset_stats': FLAGS.num_examples_dataset_stats
     }
 
     resources_per_worker = {

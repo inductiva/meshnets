@@ -34,6 +34,34 @@ def get_output_size(dataloader):
     return example.y.shape[-1]
 
 
+def compute_train_stats(dataset, max_examples=1000):
+    """Compute the mean and standard deviation of dataset features.
+
+    Args:
+        dataset: A `torch_geometric.data.Dataset` object.
+        max_examples: The maximum number of examples to use for computing the
+            statistics.
+
+    Returns:
+        A dictionary with the mean and standard deviation of the node features,
+    """
+    y_mean, y_std = data_processing.dataset_statistics.compute_mean_and_std(
+        dataset, 'wind_pressures', None, max_examples)
+    edge_attr_mean, edge_attr_std =\
+        data_processing.dataset_statistics.compute_mean_and_std(
+        dataset, 'edge_features', None, max_examples)
+    x_mean, x_std = data_processing.dataset_statistics.compute_mean_and_std(
+        dataset, 'node_features', None, max_examples)
+    return {
+        'x_mean': torch.tensor([x_mean], dtype=torch.float32),
+        'x_std': torch.tensor([x_std], dtype=torch.float32),
+        'edge_attr_mean': torch.tensor([edge_attr_mean], dtype=torch.float32),
+        'edge_attr_std': torch.tensor([edge_attr_std], dtype=torch.float32),
+        'y_mean': torch.tensor([y_mean], dtype=torch.float32),
+        'y_std': torch.tensor([y_std], dtype=torch.float32)
+    }
+
+
 def train_model(config):
     """Train the MeshGraphNet model given the training config, experiment config
     and datasets.
@@ -61,11 +89,6 @@ def train_model(config):
     log_every_n_steps = config['log_every_n_steps']
     # Checkpoint config
     save_top_k = config['save_top_k']
-
-    # TODO(augusto): Compute the training dataset stats for
-    # normalization. Previously this was done in the dataset
-    # class. Now we need a way to iterate over the dataset to compute
-    # the stats.
 
     train_dataset = datasets.load_dataset('inductiva/wind_tunnel',
                                           version=dataset_version,
@@ -106,17 +129,8 @@ def train_model(config):
     edge_feature_size = get_edge_feature_size(train_loader)
     output_size = get_output_size(train_loader)
 
-    # TODO(augusto): Priority: This must be changes. At the moment
-    # this is just for testing the hugging face integration. It will
-    # be changed with the highest priority.
-    train_stats = {
-        'x_mean': torch.tensor([0.0]),
-        'x_std': torch.tensor([1.0]),
-        'edge_attr_mean': torch.tensor([0.0]),
-        'edge_attr_std': torch.tensor([1.0]),
-        'y_mean': torch.tensor([0.0]),
-        'y_std': torch.tensor([1.])
-    }
+    train_stats = compute_train_stats(train_dataset,
+                                      config['num_examples_dataset_stats'])
 
     model = modules.lightning_wrapper.MGNLightningWrapper(
         modules.model.MeshGraphNet,
