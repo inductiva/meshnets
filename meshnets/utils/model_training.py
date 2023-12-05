@@ -2,6 +2,7 @@
 
 The `train_model` method can be called for standard training with a Ray strategy
 or be used for tuning using Ray."""
+from absl import logging
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -68,6 +69,9 @@ def train_model(config):
     """
     dataset_version = config['dataset_version']
     val_dataset_versions = config['val_dataset_versions']
+    # Configs for mapping over the dataset
+    num_proc = config['num_proc']
+    writer_batch_size = config['writer_batch_size']
 
     # Dataloader config
     batch_size = config['batch_size']
@@ -92,13 +96,25 @@ def train_model(config):
 
     train_dataset = datasets.load_dataset('inductiva/wind_tunnel',
                                           version=dataset_version,
-                                          split='train')
+                                          split='train[:10%]',
+                                          download_mode='force_redownload')
+    logging.info('Making undirected edges.')
     train_dataset = train_dataset.map(
-        lambda x: data_processing.data_mappers.to_undirected(x, 'edges'))
+        lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
+        num_proc=num_proc,
+        writer_batch_size=writer_batch_size)
+    print('Making edge features.')
     train_dataset = train_dataset.map(
-        data_processing.data_mappers.make_edge_features)
+        data_processing.data_mappers.make_edge_features,
+        num_proc=num_proc,
+        writer_batch_size=writer_batch_size)
+    print('Making node features.')
     train_dataset = train_dataset.map(lambda x: data_processing.data_mappers.
-                                      make_node_features(x, 'wind_vector'))
+                                      make_node_features(x, 'wind_vector'),
+                                      num_proc=num_proc,
+                                      writer_batch_size=writer_batch_size,
+                                      remove_columns='nodes')
+    print('Mapping over the dataset done.')
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -113,11 +129,17 @@ def train_model(config):
                                             version=val_dataset_version,
                                             split='train')
         val_dataset = val_dataset.map(
-            lambda x: data_processing.data_mappers.to_undirected(x, 'edges'))
+            lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
+            num_proc=num_proc,
+            writer_batch_size=writer_batch_size)
         val_dataset = val_dataset.map(
-            data_processing.data_mappers.make_edge_features)
+            data_processing.data_mappers.make_edge_features,
+            num_proc=num_proc,
+            writer_batch_size=writer_batch_size)
         val_dataset = val_dataset.map(lambda x: data_processing.data_mappers.
-                                      make_node_features(x, 'wind_vector'))
+                                      make_node_features(x, 'wind_vector'),
+                                      num_proc=num_proc,
+                                      writer_batch_size=writer_batch_size)
 
         validation_loaders.append(
             torch.utils.data.DataLoader(val_dataset,
@@ -125,10 +147,14 @@ def train_model(config):
                                         num_workers=num_workers_loader,
                                         shuffle=False))
 
+    print('Getting node feature size.')
     node_feature_size = get_node_feature_size(train_loader)
+    print('Getting edge feature size.')
     edge_feature_size = get_edge_feature_size(train_loader)
+    print('Getting output size.')
     output_size = get_output_size(train_loader)
 
+    print('Computing dataset statistics.')
     train_stats = compute_train_stats(train_dataset,
                                       config['num_examples_dataset_stats'])
 
@@ -154,6 +180,7 @@ def train_model(config):
     mlf_logger = callbacks.MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
 
+    print('counting parameters')
     num_params = sum(p.numel() for p in model.model.parameters())
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({
@@ -193,4 +220,5 @@ def train_model(config):
     )
 
     trainer = ray.train.lightning.prepare_trainer(trainer)
+    print('Starting training.')
     trainer.fit(model, train_loader, validation_loaders)

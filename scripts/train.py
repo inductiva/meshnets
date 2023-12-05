@@ -57,6 +57,10 @@ flags.DEFINE_integer('num_cpus_per_worker', 24,
                      'The number of cpus for each worker.')
 flags.DEFINE_bool('use_gpu', True, 'Whether to use gpu or not.')
 
+flags.DEFINE_integer('writer_batch_size', 1,
+                     'Rows to write by hugging face on maps.')
+flags.DEFINE_integer('num_proc', 10, 'Number of processes to use.')
+
 flags.DEFINE_integer(
     'num_examples_dataset_stats', 1000,
     'Number of examples in the dataset to use for statistics.')
@@ -87,7 +91,9 @@ def main(_):
         'max_epochs': FLAGS.max_epochs,
         'log_every_n_steps': FLAGS.log_every_n_steps,
         'save_top_k': FLAGS.save_top_k,
-        'num_examples_dataset_stats': FLAGS.num_examples_dataset_stats
+        'num_examples_dataset_stats': FLAGS.num_examples_dataset_stats,
+        'num_proc': FLAGS.num_proc,
+        'writer_batch_size': FLAGS.writer_batch_size
     }
 
     resources_per_worker = {
