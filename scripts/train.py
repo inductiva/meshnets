@@ -25,8 +25,6 @@ flags.DEFINE_multi_string(
 # Dataset splits path
 flags.DEFINE_float('train_split', 0.9,
                    'The fraction of the dataset used for traing.')
-flags.DEFINE_float('validation_split', 0.1,
-                   'The fraction of the dataset used for validation.')
 
 # Dataloaders flags
 flags.DEFINE_integer('batch_size', 8, 'The batch size.')
@@ -80,6 +78,7 @@ def main(_):
 
     config = {
         'dataset_version': FLAGS.dataset_version,
+        'train_split': FLAGS.train_split,
         'val_dataset_versions': FLAGS.val_dataset_versions,
         'batch_size': FLAGS.batch_size,
         'latent_size': FLAGS.latent_size,

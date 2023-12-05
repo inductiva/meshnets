@@ -63,12 +63,57 @@ def compute_train_stats(dataset, max_examples=1000):
     }
 
 
+def make_dataloader(version,
+                    split_percentage,
+                    split_start,
+                    num_proc,
+                    writer_batch_size,
+                    batch_size,
+                    num_workers_loader,
+                    shuffle=True):
+    """Make a dataloader for the wind tunnel dataset."""
+    if split_start == 'beginning':
+        split = f'train[:{split_percentage:.0%}]'
+    elif split_start == 'end':
+        split = f'train[-{split_percentage:.0%}:]'
+    else:
+        raise ValueError(f'Invalid split_start: {split_start}')
+    dataset = datasets.load_dataset('inductiva/wind_tunnel',
+                                    version=version,
+                                    split=split,
+                                    download_mode='force_redownload')
+    logging.info('Making undirected edges.')
+    dataset = dataset.map(
+        lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
+        num_proc=num_proc,
+        writer_batch_size=writer_batch_size)
+    dataset = dataset.map(data_processing.data_mappers.make_edge_features,
+                          num_proc=num_proc,
+                          writer_batch_size=writer_batch_size)
+    dataset = dataset.map(lambda x: data_processing.data_mappers.
+                          make_node_features(x, 'wind_vector'),
+                          num_proc=num_proc,
+                          writer_batch_size=writer_batch_size,
+                          remove_columns='nodes')
+
+    loader = torch.utils.data.DataLoader(
+        dataset,
+        collate_fn=data_processing.torch_utils.dict_to_geometric_data,
+        batch_size=batch_size,
+        num_workers=num_workers_loader,
+        shuffle=shuffle)
+    return dataset, loader
+
+
 def train_model(config):
     """Train the MeshGraphNet model given the training config, experiment config
     and datasets.
     """
     dataset_version = config['dataset_version']
     val_dataset_versions = config['val_dataset_versions']
+    train_split = config['train_split']
+    val_split = 1 - train_split
+
     # Configs for mapping over the dataset
     num_proc = config['num_proc']
     writer_batch_size = config['writer_batch_size']
@@ -94,58 +139,20 @@ def train_model(config):
     # Checkpoint config
     save_top_k = config['save_top_k']
 
-    train_dataset = datasets.load_dataset('inductiva/wind_tunnel',
-                                          version=dataset_version,
-                                          split='train[:10%]',
-                                          download_mode='force_redownload')
-    logging.info('Making undirected edges.')
-    train_dataset = train_dataset.map(
-        lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
-        num_proc=num_proc,
-        writer_batch_size=writer_batch_size)
-    print('Making edge features.')
-    train_dataset = train_dataset.map(
-        data_processing.data_mappers.make_edge_features,
-        num_proc=num_proc,
-        writer_batch_size=writer_batch_size)
-    print('Making node features.')
-    train_dataset = train_dataset.map(lambda x: data_processing.data_mappers.
-                                      make_node_features(x, 'wind_vector'),
-                                      num_proc=num_proc,
-                                      writer_batch_size=writer_batch_size,
-                                      remove_columns='nodes')
-    print('Mapping over the dataset done.')
+    train_dataset, train_loader = make_dataloader(dataset_version, train_split,
+                                                  'beginning', num_proc,
+                                                  writer_batch_size, batch_size,
+                                                  num_workers_loader)
+    _, val_loader = make_dataloader(dataset_version, val_split, 'end', num_proc,
+                                    writer_batch_size, batch_size,
+                                    num_workers_loader)
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        collate_fn=data_processing.torch_utils.dict_to_geometric_data,
-        batch_size=batch_size,
-        num_workers=num_workers_loader,
-        shuffle=True)
-
-    validation_loaders = []
+    validation_loaders = [val_loader]
     for val_dataset_version in val_dataset_versions:
-        val_dataset = datasets.load_dataset('inductiva/wind_tunnel',
-                                            version=val_dataset_version,
-                                            split='train')
-        val_dataset = val_dataset.map(
-            lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
-            num_proc=num_proc,
-            writer_batch_size=writer_batch_size)
-        val_dataset = val_dataset.map(
-            data_processing.data_mappers.make_edge_features,
-            num_proc=num_proc,
-            writer_batch_size=writer_batch_size)
-        val_dataset = val_dataset.map(lambda x: data_processing.data_mappers.
-                                      make_node_features(x, 'wind_vector'),
-                                      num_proc=num_proc,
-                                      writer_batch_size=writer_batch_size)
-
-        validation_loaders.append(
-            torch.utils.data.DataLoader(val_dataset,
-                                        batch_size=batch_size,
-                                        num_workers=num_workers_loader,
-                                        shuffle=False))
+        _, loader = make_dataloader(val_dataset_version, 1, 'beginning',
+                                    num_proc, writer_batch_size, batch_size,
+                                    num_workers_loader)
+        validation_loaders.append(loader)
 
     print('Getting node feature size.')
     node_feature_size = get_node_feature_size(train_loader)
