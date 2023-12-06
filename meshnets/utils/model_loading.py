@@ -39,7 +39,7 @@ def load_model_from_mlflow(
                                                             checkpoint),
                                                         dst_path=temp_dir)
 
-        logging.info(f'Loading checkpoint {checkpoint_path} from {run_id}')
+        logging.info('Loading checkpoint from %s', checkpoint_path)
         wrapper = MGNLightningWrapper.load_from_checkpoint(checkpoint_path)
 
     return wrapper
