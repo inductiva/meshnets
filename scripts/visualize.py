@@ -2,6 +2,7 @@
 from absl import app
 from absl import flags
 
+import numpy as np
 import torch
 import torch_geometric
 
@@ -63,7 +64,6 @@ def main(_):
         dtype=torch.float)
 
     with torch.no_grad():
-        groundtruth = graph.y
         prediction = wrapper(graph)
 
     data_visualization.plot_3d_graph_and_predictions(

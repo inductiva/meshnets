@@ -1,4 +1,6 @@
 """Methods for visualizing mesh objects."""
+import os
+
 import matplotlib.pyplot as plt
 
 from typing import Union
@@ -18,13 +20,13 @@ def plot_3d_graph_and_predictions(example,
     fig = plt.figure(figsize=figsize)
 
     ax1 = fig.add_subplot(121, projection="3d")
-    scatter1 = ax1.scatter([pos[0] for pos in node_positions],
-                           [pos[1] for pos in node_positions],
-                           [pos[2] for pos in node_positions],
-                           c=example["wind_pressures"],
-                           cmap=plt.cm.jet,
-                           marker="o",
-                           s=point_size)
+    ax1.scatter([pos[0] for pos in node_positions],
+                [pos[1] for pos in node_positions],
+                [pos[2] for pos in node_positions],
+                c=example["wind_pressures"],
+                cmap=plt.cm.jet,
+                marker="o",
+                s=point_size)
     ax1.set_xlabel("X")
     ax1.set_ylabel("Y")
     ax1.set_zlabel("Z")
@@ -44,7 +46,7 @@ def plot_3d_graph_and_predictions(example,
     ax2.set_title("Predictions")
 
     # Add a common colorbar
-    cbar = fig.colorbar(scatter2, ax=[ax1, ax2], label="Color")
+    fig.colorbar(scatter2, ax=[ax1, ax2], label="Color")
 
     if save_path is not None:
         save_directory = os.path.dirname(save_path)
