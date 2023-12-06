@@ -2,8 +2,6 @@
 
 The `train_model` method can be called for standard training with a Ray strategy
 or be used for tuning using Ray."""
-from absl import logging
-
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
@@ -82,7 +80,6 @@ def make_dataloader(version,
                                     version=version,
                                     split=split,
                                     download_mode='force_redownload')
-    logging.info('Making undirected edges.')
     dataset = dataset.map(
         lambda x: data_processing.data_mappers.to_undirected(x, 'edges'),
         num_proc=num_proc,
