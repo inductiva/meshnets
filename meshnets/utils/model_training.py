@@ -154,14 +154,10 @@ def train_model(config):
                                     num_workers_loader)
         validation_loaders.append(loader)
 
-    print('Getting node feature size.')
     node_feature_size = get_node_feature_size(train_loader)
-    print('Getting edge feature size.')
     edge_feature_size = get_edge_feature_size(train_loader)
-    print('Getting output size.')
     output_size = get_output_size(train_loader)
 
-    print('Computing dataset statistics.')
     train_stats = compute_train_stats(train_dataset,
                                       config['num_examples_dataset_stats'])
 
@@ -179,7 +175,7 @@ def train_model(config):
         edge_attr_std=train_stats['edge_attr_std'],
         y_mean=train_stats['y_mean'],
         y_std=train_stats['y_std'],
-        validation_datasets_names=val_dataset_versions,
+        validation_datasets_names=[dataset_version] + val_dataset_versions,
         learning_rate=learning_rate)
 
     # The logger creates a new MLFlow run automatically
@@ -187,7 +183,6 @@ def train_model(config):
     mlf_logger = callbacks.MLFlowLoggerFinalizeCheckpointer(
         experiment_name=experiment_name)
 
-    print('counting parameters')
     num_params = sum(p.numel() for p in model.model.parameters())
     # Log the config parameters and training dataset stats for the run to MLFlow
     mlf_logger.log_hyperparams({
@@ -199,7 +194,7 @@ def train_model(config):
     all_callbacks = []
     monitor_metric = f'val_loss_{dataset_version}'
     # Add a suffix following lightning logging behavior
-    suffix = '' if len(val_dataset_versions) == 1 else '/dataloader_idx_0'
+    suffix = '' if len(validation_loaders) == 1 else '/dataloader_idx_0'
 
     # Save checkpoints locally in the mlflow folder
     checkpoint_callback = ModelCheckpoint(monitor=monitor_metric + suffix,
@@ -218,6 +213,7 @@ def train_model(config):
 
     all_callbacks.append(ray.train.lightning.RayTrainReportCallback())
     trainer = pl.Trainer(
+        logger=mlf_logger,
         max_epochs=max_epochs,
         devices='auto',
         accelerator='auto',
@@ -227,5 +223,4 @@ def train_model(config):
     )
 
     trainer = ray.train.lightning.prepare_trainer(trainer)
-    print('Starting training.')
     trainer.fit(model, train_loader, validation_loaders)

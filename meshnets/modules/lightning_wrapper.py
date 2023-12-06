@@ -84,7 +84,7 @@ class MGNLightningWrapper(pl.LightningModule):
         predictions = self.model(batch)
         # Normalize the labels before computing the loss
         y_norm = self.normalize_labels(batch.y)
-        loss = torch.nn.functional.mse_loss(predictions, y_norm)
+        loss = torch.nn.functional.mse_loss(torch.squeeze(predictions), y_norm)
         return loss
 
     def configure_optimizers(self) -> torch.optim.Adam:
