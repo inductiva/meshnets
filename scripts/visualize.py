@@ -24,6 +24,9 @@ flags.DEFINE_float("train_split", 0.9,
 flags.DEFINE_string("tracking_uri", None,
                     "The tracking URI for the MLFlow experiments.")
 
+flags.DEFINE_string("checkpoint_folder", 'checkpoints',
+                    "The folder to load the checkpoint from in mlflow")
+
 flags.DEFINE_string("run_id", None, "The run id of the experiment to load.")
 
 flags.DEFINE_integer("checkpoint", 0,
