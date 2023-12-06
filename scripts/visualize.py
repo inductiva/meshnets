@@ -43,10 +43,10 @@ def main(_):
         torch.manual_seed(random_seed)
 
     dataset = datasets.load_dataset(
-        'inductiva/wind_tunnel',
+        "inductiva/wind_tunnel",
         version=FLAGS.dataset_version,
-        split=f'train[-{1 - FLAGS.train_split:.0%}:]',
-        download_mode='force_redownload')
+        split=f"train[-{1 - FLAGS.train_split:.0%}:]",
+        download_mode="force_redownload")
     len_dataset = len(dataset)
     random_example = dataset[np.random.randint(len_dataset)]
     random_example = data_mappers.to_undirected(random_example)
@@ -57,9 +57,9 @@ def main(_):
                                                    FLAGS.run_id,
                                                    FLAGS.checkpoint)
     graph = torch_geometric.data.Data(
-        x=torch.tensor(random_example['node_features'], dtype=torch.float32),
-        edge_index=torch.tensor(random_example['edges']).T,
-        edge_attr=torch.tensor(random_example['edge_features'],
+        x=torch.tensor(random_example["node_features"], dtype=torch.float32),
+        edge_index=torch.tensor(random_example["edges"]).T,
+        edge_attr=torch.tensor(random_example["edge_features"],
                                dtype=torch.float32),
         dtype=torch.float)
 
