@@ -39,6 +39,20 @@ flags.DEFINE_string("output_file_path", None, "File path to save the plot.")
 flags.mark_flag_as_required("dataset_version")
 
 
+def prepare_example(example):
+    """Prepares the example for visualization."""
+    example = data_mappers.to_undirected(example)
+    example = data_mappers.make_edge_features(example)
+    example = data_mappers.make_node_features(example)
+
+    graph = torch_geometric.data.Data(
+        x=torch.tensor(example["node_features"], dtype=torch.float32),
+        edge_index=torch.tensor(example["edges"]).T,
+        edge_attr=torch.tensor(example["edge_features"], dtype=torch.float32),
+        dtype=torch.float)
+    return example, graph
+
+
 def main(_):
 
     random_seed = FLAGS.random_seed
@@ -51,20 +65,13 @@ def main(_):
         split=f"train[-{1 - FLAGS.train_split:.0%}:]",
         download_mode="force_redownload")
     len_dataset = len(dataset)
+
     random_example = dataset[np.random.randint(len_dataset)]
-    random_example = data_mappers.to_undirected(random_example)
-    random_example = data_mappers.make_edge_features(random_example)
-    random_example = data_mappers.make_node_features(random_example)
+    random_example, graph = prepare_example(random_example)
 
     wrapper = model_loading.load_model_from_mlflow(FLAGS.tracking_uri,
                                                    FLAGS.run_id,
                                                    FLAGS.checkpoint)
-    graph = torch_geometric.data.Data(
-        x=torch.tensor(random_example["node_features"], dtype=torch.float32),
-        edge_index=torch.tensor(random_example["edges"]).T,
-        edge_attr=torch.tensor(random_example["edge_features"],
-                               dtype=torch.float32),
-        dtype=torch.float)
 
     with torch.no_grad():
         prediction = wrapper(graph)
