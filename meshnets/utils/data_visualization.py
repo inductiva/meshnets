@@ -16,13 +16,16 @@ def plot_3d_graph_and_predictions(example,
                                   save_path=None,
                                   figsize=(12, 6)):
     node_positions = example["nodes"]
+    x = [pos[0] for pos in node_positions]
+    y = [pos[1] for pos in node_positions]
+    z = [pos[2] for pos in node_positions]
 
     fig = plt.figure(figsize=figsize)
 
     ax1 = fig.add_subplot(121, projection="3d")
-    ax1.scatter([pos[0] for pos in node_positions],
-                [pos[1] for pos in node_positions],
-                [pos[2] for pos in node_positions],
+    ax1.scatter(x,
+                y,
+                z,
                 c=example["wind_pressures"],
                 cmap=plt.cm.jet,
                 marker="o",
@@ -33,9 +36,9 @@ def plot_3d_graph_and_predictions(example,
     ax1.set_title("Wind Pressures")
 
     ax2 = fig.add_subplot(122, projection="3d")
-    scatter2 = ax2.scatter([pos[0] for pos in node_positions],
-                           [pos[1] for pos in node_positions],
-                           [pos[2] for pos in node_positions],
+    scatter2 = ax2.scatter(x,
+                           y,
+                           z,
                            c=predictions,
                            cmap=plt.cm.jet,
                            marker="o",
