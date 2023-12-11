@@ -1,10 +1,64 @@
 """Methods for visualizing mesh objects."""
+import os
+
+import matplotlib.pyplot as plt
 
 from typing import Union
 from typing import Tuple
 
 import numpy as np
 import pyvista as pv
+
+
+def plot_3d_graph_and_predictions(example,
+                                  predictions,
+                                  point_size=100,
+                                  save_path=None,
+                                  figsize=(12, 6)):
+    node_positions = example["nodes"]
+    x = [pos[0] for pos in node_positions]
+    y = [pos[1] for pos in node_positions]
+    z = [pos[2] for pos in node_positions]
+
+    fig = plt.figure(figsize=figsize)
+
+    ax1 = fig.add_subplot(121, projection="3d")
+    ax1.scatter(x,
+                y,
+                z,
+                c=example["wind_pressures"],
+                cmap=plt.cm.jet,
+                marker="o",
+                s=point_size)
+    ax1.set_xlabel("X")
+    ax1.set_ylabel("Y")
+    ax1.set_zlabel("Z")
+    ax1.set_title("Wind Pressures")
+
+    ax2 = fig.add_subplot(122, projection="3d")
+    scatter2 = ax2.scatter(x,
+                           y,
+                           z,
+                           c=predictions,
+                           cmap=plt.cm.jet,
+                           marker="o",
+                           s=point_size)
+    ax2.set_xlabel("X")
+    ax2.set_ylabel("Y")
+    ax2.set_zlabel("Z")
+    ax2.set_title("Predictions")
+
+    # Add a common colorbar
+    fig.colorbar(scatter2, ax=[ax1, ax2], label="Color")
+
+    if save_path is not None:
+        save_directory = os.path.dirname(save_path)
+        if not os.path.exists(save_directory):
+            os.makedirs(save_directory)
+
+        plt.savefig(save_path)
+    else:
+        plt.show()
 
 
 def plot_mesh(mesh_path: str,

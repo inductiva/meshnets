@@ -1,21 +1,22 @@
 """The main file for result visualization."""
-import os
-
 from absl import app
 from absl import flags
-import numpy as np
-import pyvista as pv
-import torch
 
-import meshnets
+import numpy as np
+import torch
+import torch_geometric
+
+import datasets
+
+from meshnets.data_processing import data_mappers
+from meshnets.utils import data_visualization, model_loading
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string("dataset_version", None,
+                    "The version of the dataset to use.")
 flags.DEFINE_integer("random_seed", 21,
                      "The seed to initialize the random number generator.")
-
-flags.DEFINE_string("data_dir", os.path.join("data", "dataset"),
-                    "Path to the folder containing the mesh files.")
 
 flags.DEFINE_float("train_split", 0.9,
                    "The fraction of the dataset used for traing.")
@@ -23,18 +24,33 @@ flags.DEFINE_float("train_split", 0.9,
 flags.DEFINE_string("tracking_uri", None,
                     "The tracking URI for the MLFlow experiments.")
 
+flags.DEFINE_string("checkpoint_folder", "checkpoints",
+                    "The folder to load the checkpoint from in mlflow")
+
 flags.DEFINE_string("run_id", None, "The run id of the experiment to load.")
 
 flags.DEFINE_integer("checkpoint", 0,
                      "The checkpoint to load from the experiment.")
 
-flags.DEFINE_bool("start_xvfb", False, "Whether to start xvfb or not.")
+flags.DEFINE_float("point_size", 20, "The size of the points in the plot.")
 
-flags.DEFINE_bool("normalized", False,
-                  "Wether to plot the normalized pressure or not.")
+flags.DEFINE_string("output_file_path", None, "File path to save the plot.")
 
-flags.DEFINE_string("output_file_path", os.path.join("imgs", "plot.png"),
-                    "File path to save the plot.")
+flags.mark_flag_as_required("dataset_version")
+
+
+def prepare_example(example):
+    """Prepares the example for visualization."""
+    example = data_mappers.to_undirected(example)
+    example = data_mappers.make_edge_features(example)
+    example = data_mappers.make_node_features(example)
+
+    graph = torch_geometric.data.Data(
+        x=torch.tensor(example["node_features"], dtype=torch.float32),
+        edge_index=torch.tensor(example["edges"]).T,
+        edge_attr=torch.tensor(example["edge_features"], dtype=torch.float32),
+        dtype=torch.float)
+    return example, graph
 
 
 def main(_):
@@ -43,59 +59,28 @@ def main(_):
     if random_seed is not None:
         torch.manual_seed(random_seed)
 
-    dataset = meshnets.utils.datasets.FromDiskGeometricDataset(FLAGS.data_dir)
-    size_dataset = len(dataset)
-    num_training = int(FLAGS.train_split * size_dataset)
-    _, validation_dataset = torch.utils.data.random_split(
-        dataset, [num_training, size_dataset - num_training])
+    dataset = datasets.load_dataset(
+        "inductiva/wind_tunnel",
+        version=FLAGS.dataset_version,
+        split=f"train[-{1 - FLAGS.train_split:.0%}:]",
+        download_mode="force_redownload")
+    len_dataset = len(dataset)
 
-    wrapper = meshnets.utils.model_loading.load_model_from_mlflow(
-        FLAGS.tracking_uri, FLAGS.run_id, FLAGS.checkpoint)
+    random_example = dataset[np.random.randint(len_dataset)]
+    random_example, graph = prepare_example(random_example)
 
-    sample_idx = np.random.choice(validation_dataset.indices)
-
-    mesh_path = dataset.get_mesh_path(sample_idx)
-    graph_path = dataset.get_graph_path(sample_idx)
+    wrapper = model_loading.load_model_from_mlflow(FLAGS.tracking_uri,
+                                                   FLAGS.run_id,
+                                                   FLAGS.checkpoint)
 
     with torch.no_grad():
-        graph = torch.load(graph_path)
+        prediction = wrapper(graph)
 
-        if FLAGS.normalized:
-            groundtruth = wrapper.normalize_labels(graph.y)
-            prediction = wrapper.normalize_labels(wrapper(graph))
-        else:
-            groundtruth = graph.y
-            prediction = wrapper(graph)
-
-    if FLAGS.start_xvfb:
-        pv.start_xvfb()
-
-    meshnets.utils.data_visualization.plot_mesh_comparison(
-        mesh_path,
-        groundtruth,
-        prediction,
-        clim=None,
-        rotate_z=180,
-        off_screen=False,
-        screenshot=FLAGS.output_file_path)
-
-    meshnets.utils.data_visualization.plot_relative_error(
-        mesh_path,
-        groundtruth,
-        prediction,
-        clim=None,
-        rotate_z=180,
-        off_screen=False,
-        screenshot=FLAGS.output_file_path)
-
-    meshnets.utils.data_visualization.plot_relative_error(
-        mesh_path,
-        groundtruth,
-        prediction,
-        clim=[0, 1],
-        rotate_z=180,
-        off_screen=False,
-        screenshot=FLAGS.output_file_path)
+    data_visualization.plot_3d_graph_and_predictions(
+        random_example,
+        prediction.numpy(),
+        point_size=FLAGS.point_size,
+        save_path=FLAGS.output_file_path)
 
 
 if __name__ == "__main__":
