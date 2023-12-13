@@ -39,13 +39,17 @@ class MLFlowLoggerFinalizeCheckpointer(MLFlowLogger):
         if self._checkpoint_callback is None:
             self._checkpoint_callback = checkpoint_callback
 
+        self.experiment.log_artifacts(self.run_id,
+                                      self._checkpoint_callback.dirpath,
+                                      artifact_path='checkpoints')
+
     def finalize(self, status: str) -> None:
         """Log the checkpoints as MLFlow artifacts at the end of training."""
 
         if self._checkpoint_callback is not None:
             self.experiment.log_artifacts(self.run_id,
                                           self._checkpoint_callback.dirpath,
-                                          artifact_path='checkpoints')
+                                          artifact_path='checkpoints_final')
         super().finalize(status)
 
 
